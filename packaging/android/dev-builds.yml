@@ -45,6 +45,9 @@ jobs:
       CARGO_PROFILE_DEV_DEBUG: '0'
       CARGO_TARGET_DIR: ${{ github.workspace }}/.local/ci-target
       HORIZON_TELEMETRY_URL: 'off'
+      ANDROID_DEV_STORE_PASSWORD: ${{ secrets.ANDROID_DEV_STORE_PASSWORD }}
+      ANDROID_DEV_KEY_PASSWORD: ${{ secrets.ANDROID_DEV_KEY_PASSWORD }}
+      ANDROID_DEV_KEY_ALIAS: ${{ secrets.ANDROID_DEV_KEY_ALIAS }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
