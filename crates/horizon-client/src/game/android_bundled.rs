@@ -104,11 +104,81 @@ mod smartf3_settings;
 #[path = "android_bundled/smartf3/smartf3_click.rs"]
 mod smartf3_click;
 
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizon_voxel_cracker/runtime.rs"]
+pub(super) mod horizon_voxel_cracker;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizon_voxel_cracker/adapters/hvc_list.rs"]
+mod hvc_list;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizon_voxel_cracker/adapters/hvc_settings.rs"]
+mod hvc_settings;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizon_voxel_cracker/adapters/hvc_click.rs"]
+mod hvc_click;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizon_voxel_cracker/adapters/hvc_command.rs"]
+mod hvc_command;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizon_voxel_cracker/adapters/hvc_key.rs"]
+mod hvc_key;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizon_voxel_cracker/adapters/hvc_hud.rs"]
+mod hvc_hud;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizon_voxel_cracker/adapters/hvc_tick.rs"]
+mod hvc_tick;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/runtime.rs"]
+pub(super) mod horizonmatica;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/adapters/hzm_list.rs"]
+mod hzm_list;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/adapters/hzm_settings.rs"]
+mod hzm_settings;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/adapters/hzm_click.rs"]
+mod hzm_click;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/adapters/hzm_command.rs"]
+mod hzm_command;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/adapters/hzm_key.rs"]
+mod hzm_key;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/adapters/hzm_hud.rs"]
+mod hzm_hud;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/adapters/hzm_tick.rs"]
+mod hzm_tick;
+
+#[cfg(target_os = "android")]
+#[path = "android_bundled/VkYakeeMods/horizonmatica/adapters/hzm_visuals.rs"]
+mod hzm_visuals;
+
 pub(super) fn native_key(game: &mut Game<'_>, key: &str, pressed: bool) {
     let _ = (&game, &key, &pressed);
     #[cfg(target_os = "android")]
     {
         zoom_key::run(&mut *game, key, pressed);
+        hvc_key::run(&mut *game, key, pressed);
+        hzm_key::run(&mut *game, key, pressed);
     }
 }
 
@@ -136,6 +206,8 @@ pub(super) fn native_mods(game: &mut Game<'_>, mods: &mut Vec<NativeMod>) {
         minimap_list::run(&mut *mods);
         recipes_list::run(&mut *mods);
         smartf3_list::run(&mut *mods);
+        hvc_list::run(&mut *mods);
+        hzm_list::run(&mut *mods);
     }
 }
 
@@ -147,6 +219,8 @@ pub(super) fn native_settings(game: &mut Game<'_>, mod_id: &str, buttons: &mut V
         minimap_settings::run(&mut *game, mod_id, &mut *buttons);
         recipes_settings::run(&mut *game, mod_id, &mut *buttons);
         smartf3_settings::run(&mut *game, mod_id, &mut *buttons);
+        hvc_settings::run(&mut *game, mod_id, &mut *buttons);
+        hzm_settings::run(&mut *game, mod_id, &mut *buttons);
     }
 }
 
@@ -158,6 +232,8 @@ pub(super) fn native_settings_click(game: &mut Game<'_>, mod_id: &str, button: u
         minimap_click::run(&mut *game, mod_id, button);
         recipes_click::run(&mut *game, mod_id, button);
         smartf3_click::run(&mut *game, mod_id, button);
+        hvc_click::run(&mut *game, mod_id, button);
+        hzm_click::run(&mut *game, mod_id, button);
     }
 }
 
@@ -190,6 +266,51 @@ pub(super) fn native_command(game: &mut Game<'_>, command: &str, ran: &mut bool)
     #[cfg(target_os = "android")]
     {
         smartf3_command::run(&mut *game, command, &mut *ran);
+        hvc_command::run(&mut *game, command, &mut *ran);
+        hzm_command::run(&mut *game, command, &mut *ran);
+    }
+}
+
+pub(super) fn native_commands(game: &mut Game<'_>, commands: &mut Vec<&'static str>) {
+    let _ = (&game, &commands);
+    #[cfg(target_os = "android")]
+    {
+        commands.push("hvc");
+        commands.push("horizonvoxelcracker");
+        commands.push("seedcracker");
+        commands.push("horizonmatica");
+        commands.push("hzm");
+        commands.push("litematica");
+    }
+}
+
+pub(super) fn native_hud(game: &mut Game<'_>, batch: &mut HudBatch, corners: &mut Corners) {
+    let _ = (&game, &batch, &corners);
+    #[cfg(target_os = "android")]
+    {
+        hvc_hud::run(&mut *game, batch, corners);
+        hzm_hud::run(&mut *game, batch, corners);
+    }
+}
+
+pub(super) fn native_tick(game: &mut Game<'_>) {
+    let _ = &game;
+    #[cfg(target_os = "android")]
+    {
+        hvc_tick::run(&mut *game);
+        hzm_tick::run(&mut *game);
+    }
+}
+
+pub(super) fn native_visuals(
+    game: &Game<'_>,
+    rims: &mut Vec<NativeBlockRim>,
+    lights: &mut Vec<NativeColoredLight>,
+) {
+    let _ = (&game, &rims, &lights);
+    #[cfg(target_os = "android")]
+    {
+        hzm_visuals::run(&*game, rims, lights);
     }
 }
 
@@ -199,4 +320,6 @@ pub(super) fn reset() {
     official_minimap::reset();
     official_recipes::set_viewer(None);
     smartf3_native::reset();
+    horizon_voxel_cracker::reset();
+    horizonmatica::reset();
 }

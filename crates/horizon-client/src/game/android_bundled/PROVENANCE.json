@@ -26,5 +26,19 @@
     "repository": "https://github.com/d3grando/smartf3",
     "license": "MIT",
     "changes": "Static Android adapters; helper visibility/names adapted; reset profile state. SmartF3 preserves the Android F3 scale and code-of-conduct screen."
+  },
+  {
+    "id": "horizon_voxel_cracker",
+    "commit": "fa548eb7a",
+    "repository": "https://github.com/VkYakee/starling",
+    "license": "MIT",
+    "changes": "VkYakee VoxelMap x seedcrackerX for Starling / Horizon Android with Bedrock Touch UI and scoped per-world storage."
+  },
+  {
+    "id": "horizonmatica",
+    "commit": "806a6ea4f",
+    "repository": "https://github.com/maruohon/litematica",
+    "license": "LGPL-3.0",
+    "changes": "Pure Rust port for Starling / Horizon Android with Minecraft Bedrock Edition touchscreen action bar and modal dialogs, real-time schematic verifier, material list aggregator, and universal .litematic, .schem, and .nbt format support."
   }
 ]

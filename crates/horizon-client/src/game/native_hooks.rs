@@ -1145,7 +1145,9 @@ impl Game<'_> {
     /// Once a tick, in every `Game`: the window's (in single player, on LAN
     /// and on servers), and the server's own (`native_window` is false
     /// there: the single player server thread, a dedicated server).
-    pub(super) fn native_tick(&mut self) {}
+    pub(super) fn native_tick(&mut self) {
+        super::android_bundled::native_tick(self);
+    }
     /// Before an eligible targeted block's selection outline is built.
     /// Cancel skips only the default block highlight, after normal HUD and game-mode gates.
     pub(super) fn native_block_highlight(
@@ -1164,7 +1166,7 @@ impl Game<'_> {
         rims: &mut Vec<NativeBlockRim>,
         lights: &mut Vec<NativeColoredLight>,
     ) {
-        let _ = (rims, lights);
+        super::android_bundled::native_visuals(self, rims, lights);
     }
     /// At most 32 pairs of already-loaded base and transparent overlay sprites.
     /// Per-pixel alpha in the overlay marks full-bright material, without
@@ -1230,6 +1232,7 @@ impl Game<'_> {
     /// `native_fill` and `native_text`. Skip a corner `native_corner_shown`
     /// says is taken.
     pub(super) fn native_hud(&mut self, batch: &mut HudBatch, corners: &mut Corners) {
+        super::android_bundled::native_hud(self, batch, corners);
         let _ = (batch, corners);
     }
     /// A player right-clicks the entity `entity` (`Entity.getId`) of type
@@ -1311,6 +1314,7 @@ impl Game<'_> {
     /// completes and lists them as the game's own; a name the game already
     /// has keeps that command's behaviour. API 35.
     pub(super) fn native_commands(&mut self, commands: &mut Vec<&'static str>) {
+        super::android_bundled::native_commands(self, commands);
         let _ = commands;
     }
     /// The zoom a native mod asks for, applied while playing (the spyglass's

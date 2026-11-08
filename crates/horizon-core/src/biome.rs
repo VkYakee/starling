@@ -20,6 +20,10 @@ impl BiomeZoom {
             seed: obfuscated_seed,
         }
     }
+    /// Returns the obfuscated biome seed.
+    pub const fn seed(self) -> i64 {
+        self.seed
+    }
     /// Choose the closest of eight jittered quart corners, preserving vanilla's
     /// corner order, strict tie comparison and signed coordinate wrapping.
     ///

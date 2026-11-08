@@ -204,7 +204,8 @@ mod native_falling;
 mod native_hooks;
 #[cfg(target_os = "android")]
 use android_bundled::{
-    official_minimap, official_recipes, official_recipes_glue, official_zoom, smartf3,
+    horizon_voxel_cracker, horizonmatica, official_minimap, official_recipes,
+    official_recipes_glue, official_zoom, smartf3,
 };
 mod native_lifecycle;
 mod native_menus;
