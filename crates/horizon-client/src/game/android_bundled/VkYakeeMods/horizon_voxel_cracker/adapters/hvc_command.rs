@@ -24,7 +24,7 @@ pub(in crate::game) fn run(game: &mut crate::game::Game<'_>, command: &str, ran:
         &rt.cracker,
         |msg| {
             // Send feedback to client chat
-            game.chat.push(horizon_client::text::Text::literal(msg));
+            game.system_message(horizon_client::text::Text::literal(msg));
         },
     );
 

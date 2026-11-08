@@ -155,6 +155,7 @@ pub fn load_from_bytes(raw_bytes: &[u8], filename: &str) -> Result<LoadedSchemat
     let limits = Limits {
         max_bytes: 256 * 1024 * 1024,
         max_depth: 512,
+        max_nodes: 2_000_000,
     };
     let (root_named, _) = nbt::read_named(&decompressed, limits)
         .map_err(|e| format!("NBT parse failure: {e}"))?;

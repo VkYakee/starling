@@ -1,6 +1,7 @@
 //! Fixed MIT-licensed Android mod bundle. No downloaded code or phone compiler.
 
 use super::*;
+use horizon_client::extras_hud::Corners;
 
 use super::native_hooks::*;
 

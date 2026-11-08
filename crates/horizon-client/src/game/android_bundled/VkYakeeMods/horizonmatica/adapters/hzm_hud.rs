@@ -9,7 +9,7 @@ use r::touch_ui::ModalKind;
 pub(in crate::game) fn run(
     game: &mut crate::game::Game<'_>,
     batch: &mut horizon_client::hud::HudBatch,
-    corners: &mut crate::game::extras_hud::Corners,
+    corners: &mut horizon_client::extras_hud::Corners,
 ) {
     let _ = corners;
     let rt = r::get();

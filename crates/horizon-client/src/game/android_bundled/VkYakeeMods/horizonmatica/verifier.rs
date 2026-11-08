@@ -63,6 +63,7 @@ impl VerifierStats {
     }
 }
 
+#[derive(Clone)]
 pub struct SchematicVerifier {
     pub active: bool,
     pub mismatches: Vec<VerifierMismatch>,

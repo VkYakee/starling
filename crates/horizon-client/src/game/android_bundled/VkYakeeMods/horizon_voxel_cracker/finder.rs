@@ -13,7 +13,7 @@ pub struct StructureFinder {
 }
 
 impl StructureFinder {
-    pub const fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             visited_chunks: Mutex::new(HashSet::new()),
         }
@@ -36,7 +36,7 @@ impl StructureFinder {
         cz: i32,
         dim: &str,
         biome_name: Option<&str>,
-        get_block_name: impl Fn(i32, i32, i32) -> Option<&str>,
+        get_block_name: impl Fn(i32, i32, i32) -> Option<String>,
         cracker: &Arc<CrackerEngine>,
         waypoints: &WaypointManager,
     ) {

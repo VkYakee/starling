@@ -46,14 +46,14 @@ pub(in crate::game) fn run(game: &mut crate::game::Game<'_>, key: &str, pressed:
     if key == "key.keyboard.m" {
         let mut s = rt.settings.lock().unwrap();
         s.show_minimap = !s.show_minimap;
-        game.chat.push(horizon_client::text::Text::literal(format!(
+        game.system_message(horizon_client::text::Text::literal(format!(
             "[HVC] Minimap toggled {}",
             if s.show_minimap { "ON" } else { "OFF" }
         )));
     } else if key == "key.keyboard.c" {
         let mut s = rt.settings.lock().unwrap();
         s.cave_mode = !s.cave_mode;
-        game.chat.push(horizon_client::text::Text::literal(format!(
+        game.system_message(horizon_client::text::Text::literal(format!(
             "[HVC] Cave Mode toggled {}",
             if s.cave_mode { "ON" } else { "OFF" }
         )));
@@ -63,7 +63,7 @@ pub(in crate::game) fn run(game: &mut crate::game::Game<'_>, key: &str, pressed:
             let dim = game.dim.id();
             let wp = r::waypoints::Waypoint::new("Quick Point", pos, dim, 0xFF55_FFFF);
             rt.waypoints.add(wp);
-            game.chat.push(horizon_client::text::Text::literal(format!(
+            game.system_message(horizon_client::text::Text::literal(format!(
                 "[HVC] Saved quick waypoint at [{}, {}, {}]",
                 pos[0], pos[1], pos[2]
             )));

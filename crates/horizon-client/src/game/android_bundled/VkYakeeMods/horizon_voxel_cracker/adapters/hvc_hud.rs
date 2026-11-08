@@ -10,7 +10,7 @@ use r::radar::{RadarBlip, classify_entity_type};
 pub(in crate::game) fn run(
     game: &mut crate::game::Game<'_>,
     batch: &mut horizon_client::hud::HudBatch,
-    corners: &mut crate::game::extras_hud::Corners,
+    corners: &mut horizon_client::extras_hud::Corners,
 ) {
     let rt = r::get();
     let settings = *rt.settings.lock().unwrap();

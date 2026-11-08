@@ -7,7 +7,7 @@ use horizon_client::text::Text;
 use super::format;
 use super::materials::MaterialReport;
 use super::placement::{LayerMode, Mirror, Rotation};
-use super::runtime::{self, HorizonMaticaRuntime};
+use super::HorizonMaticaRuntime;
 use super::storage;
 
 pub struct CommandDispatcher;
@@ -255,5 +255,5 @@ impl CommandDispatcher {
 }
 
 fn send_chat(game: &mut crate::game::Game<'_>, msg: &str) {
-    game.chat.push(Text::literal(msg));
+    game.system_message(Text::literal(msg));
 }

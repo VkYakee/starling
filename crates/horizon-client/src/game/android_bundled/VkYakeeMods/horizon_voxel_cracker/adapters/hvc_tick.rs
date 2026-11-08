@@ -22,12 +22,12 @@ pub(in crate::game) fn run(game: &mut crate::game::Game<'_>) {
     let dim = game.dim.id();
 
     // 1. Detect death to place automatic death waypoint
-    let is_dead = player.health <= 0.0;
+    let is_dead = player.health.health() <= 0.0;
     let was_alive = WAS_ALIVE.swap(!is_dead, Ordering::SeqCst);
     if is_dead && was_alive {
         let death_pos = [px.round() as i32, py.round() as i32, pz.round() as i32];
         rt.waypoints.on_death(death_pos, dim);
-        game.chat.push(horizon_client::text::Text::literal(format!(
+        game.system_message(horizon_client::text::Text::literal(format!(
             "☠ [HVC] Death waypoint saved at [{}, {}, {}]",
             death_pos[0], death_pos[1], death_pos[2]
         )));
@@ -80,7 +80,7 @@ pub(in crate::game) fn run(game: &mut crate::game::Game<'_>) {
                         if facts.is_air(state) {
                             return None;
                         }
-                        Some(&*facts.get(state).name)
+                        Some(facts.get(state).name.to_string())
                     },
                     &rt.cracker,
                     &rt.waypoints,
