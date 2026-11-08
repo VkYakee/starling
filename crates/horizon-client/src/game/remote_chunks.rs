@@ -291,7 +291,7 @@ impl Game<'_> {
             for bz in 0..16 {
                 for bx in 0..16 {
                     let state = self.world.block(x * 16 + bx, target_y, z * 16 + bz);
-                    if self.res.facts().get(state).name == "minecraft:bedrock" {
+                    if self.res.facts().get(state).name.as_ref() == "minecraft:bedrock" {
                         bedrock_mask[((bz << 4) | bx) as usize] = 1;
                         found_bedrock = true;
                     }
@@ -312,7 +312,7 @@ impl Game<'_> {
                 // 1. Buried Treasure: Chest at local column (9, 9)
                 for y in 45..=90 {
                     let st = self.world.block(x * 16 + 9, y, z * 16 + 9);
-                    if self.res.facts().get(st).name == "minecraft:chest" {
+                    if self.res.facts().get(st).name.as_ref() == "minecraft:chest" {
                         vkyakee_mods::on_structure_found("minecraft:buried_treasure", x, z);
                         break;
                     }
@@ -324,7 +324,7 @@ impl Game<'_> {
                     for bz in [4, 8, 12] {
                         for bx in [4, 8, 12] {
                             let st = self.world.block(x * 16 + bx, y, z * 16 + bz);
-                            let name = self.res.facts().get(st).name.as_str();
+                            let name = self.res.facts().get(st).name.as_ref();
                             if name == "minecraft:vault"
                                 || name == "minecraft:copper_bulb"
                                 || name == "minecraft:waxed_copper_bulb"
@@ -346,7 +346,7 @@ impl Game<'_> {
                     for bz in [4, 11] {
                         for bx in [4, 11] {
                             let st = self.world.block(x * 16 + bx, y, z * 16 + bz);
-                            let name = self.res.facts().get(st).name.as_str();
+                            let name = self.res.facts().get(st).name.as_ref();
                             if name == "minecraft:reinforced_deepslate" || name == "minecraft:sculk_shrieker" {
                                 vkyakee_mods::on_structure_found("minecraft:ancient_city", x, z);
                                 found_ancient = true;
@@ -361,7 +361,7 @@ impl Game<'_> {
                 // 4. Desert Pyramid: Check y in [55, 75]
                 for y in (55..75).step_by(3) {
                     let st = self.world.block(x * 16 + 8, y, z * 16 + 8);
-                    let name = self.res.facts().get(st).name.as_str();
+                    let name = self.res.facts().get(st).name.as_ref();
                     if name == "minecraft:tnt" || name == "minecraft:chiseled_sandstone" {
                         vkyakee_mods::on_structure_found("minecraft:desert_pyramid", x, z);
                         break;
@@ -371,7 +371,7 @@ impl Game<'_> {
                 // 5. Swamp Hut: Cauldron + Crafting table
                 for y in 60..72 {
                     let st = self.world.block(x * 16 + 7, y, z * 16 + 7);
-                    if self.res.facts().get(st).name == "minecraft:cauldron" {
+                    if self.res.facts().get(st).name.as_ref() == "minecraft:cauldron" {
                         vkyakee_mods::on_structure_found("minecraft:swamp_hut", x, z);
                         break;
                     }
@@ -380,7 +380,7 @@ impl Game<'_> {
                 // Nether Fortress: Nether bricks
                 for y in (45..75).step_by(4) {
                     let st = self.world.block(x * 16 + 8, y, z * 16 + 8);
-                    if self.res.facts().get(st).name == "minecraft:nether_bricks" {
+                    if self.res.facts().get(st).name.as_ref() == "minecraft:nether_bricks" {
                         vkyakee_mods::on_structure_found("minecraft:fortress", x, z);
                         break;
                     }
@@ -389,7 +389,7 @@ impl Game<'_> {
                 // End City: Purpur block
                 for y in (50..85).step_by(5) {
                     let st = self.world.block(x * 16 + 8, y, z * 16 + 8);
-                    if self.res.facts().get(st).name == "minecraft:purpur_block" {
+                    if self.res.facts().get(st).name.as_ref() == "minecraft:purpur_block" {
                         vkyakee_mods::on_structure_found("minecraft:end_city", x, z);
                         break;
                     }
