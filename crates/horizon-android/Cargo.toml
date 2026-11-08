@@ -16,6 +16,8 @@ horizon-narrator = { path = "../horizon-narrator" }
 horizon-client-input = { path = "../horizon-client-input" }
 horizon-anticheat = { path = "../horizon-anticheat" }
 horizon-client = { path = "../horizon-client", default-features = false }
+# VkYakee native mod framework hooks used by the Android entry crate.
+vkyakee-mods = { path = "../../VkYakeeMods" }
 android_logger = "0.15"
 regex = "1"
 horizon-hdr = { path = "../horizon-hdr" }
