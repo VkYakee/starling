@@ -17,7 +17,7 @@ impl CommandDispatcher {
         settings: &Mutex<HudSettings>,
         waypoints: &WaypointManager,
         cracker: &Arc<CrackerEngine>,
-        send_feedback: impl Fn(&str),
+        mut send_feedback: impl FnMut(&str),
     ) -> bool {
         let trimmed = cmd_line.trim();
         let parts: Vec<&str> = trimmed.split_whitespace().collect();
