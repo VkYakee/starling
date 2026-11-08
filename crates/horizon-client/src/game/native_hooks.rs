@@ -1274,7 +1274,7 @@ impl Game<'_> {
 
         // Safe-zone mobile badge for VkYakeeMods
         self.native_fill(batch, [bx, by, 72.0, 13.0], 0xCC181C24);
-        self.native_text(batch, "⚡ VkMods", [bx + 4.0, by + 2.0], 0x00FF88);
+        self.native_text(batch, "⚡ VkMods", [bx + 4.0, by + 2.0], 0x00FF88, false);
 
         if !lines.is_empty() {
             let box_y = by + 15.0;
@@ -1302,7 +1302,7 @@ impl Game<'_> {
                     0xEEEEEE // Clean Light Gray
                 };
 
-                self.native_text(batch, &line, [bx + 4.0, y], color);
+                self.native_text(batch, &line, [bx + 4.0, y], color, false);
                 y += 11.0;
             }
         }
