@@ -61,8 +61,5 @@
 /horizon-keypad.json.tmp
 
 # Reference clones of Java mods (not Git submodules; keep local, don't track).
-/HorizonVoxelCracker/VoxelMap/
-/HorizonVoxelCracker/seedcrackerX/
 /litematica/
 
-/SkillsIA/rea/
