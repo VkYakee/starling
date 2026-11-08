@@ -1145,7 +1145,19 @@ impl Game<'_> {
     /// Once a tick, in every `Game`: the window's (in single player, on LAN
     /// and on servers), and the server's own (`native_window` is false
     /// there: the single player server thread, a dedicated server).
-    pub(super) fn native_tick(&mut self) {}
+    pub(super) fn native_tick(&mut self) {
+        vkyakee_mods::on_tick();
+        if let Some(p) = self.player.as_ref() {
+            let feet = [p.position.x.floor() as i32, p.position.y.floor() as i32, p.position.z.floor() as i32];
+            vkyakee_mods::on_player_pos(feet[0], feet[1], feet[2]);
+            if let Some(chunk) = self.world.chunks.get(&(feet[0] >> 4, feet[2] >> 4)) {
+                let biome_id = chunk.biome(feet[0], feet[1], feet[2]) as usize;
+                if let Some(b) = self.res.biomes().list.get(biome_id) {
+                    vkyakee_mods::on_biome_found(feet[0], feet[2], biome_id as i32, &b.name);
+                }
+            }
+        }
+    }
     /// Before an eligible targeted block's selection outline is built.
     /// Cancel skips only the default block highlight, after normal HUD and game-mode gates.
     pub(super) fn native_block_highlight(
@@ -1230,6 +1242,70 @@ impl Game<'_> {
     /// `native_fill` and `native_text`. Skip a corner `native_corner_shown`
     /// says is taken.
     pub(super) fn native_hud(&mut self, batch: &mut HudBatch, corners: &mut Corners) {
+        if vkyakee_mods::is_default_f3_suppressed() {
+            self.debug = false;
+        }
+
+        // When F3 debug overlay is active, avoid collision with F3 screens
+        if self.debug {
+            return;
+        }
+
+        let lines = vkyakee_mods::get_hud_lines();
+        let mut max_w: f32 = 140.0;
+        for line in &lines {
+            let w = self.native_text_width(line);
+            if w > max_w {
+                max_w = w;
+            }
+        }
+
+        let total_w = max_w + 14.0;
+        let total_h = if lines.is_empty() {
+            16.0
+        } else {
+            16.0 + lines.len() as f32 * 11.0 + 6.0
+        };
+
+        // Use Starling's Corner placement:
+        // Automatically stacks below Android notch (26px) and below other mods (FPS counter, Keystrokes)
+        // Never overlaps with top-center controls (Chat, Pause, Settings) or top-right Minimap
+        let (bx, by) = corners.place(Corner::TopLeft, total_w, total_h);
+
+        // Safe-zone mobile badge for VkYakeeMods
+        self.native_fill(batch, [bx, by, 72.0, 13.0], 0xCC181C24);
+        self.native_text(batch, "⚡ VkMods", [bx + 4.0, by + 2.0], 0x00FF88);
+
+        if !lines.is_empty() {
+            let box_y = by + 15.0;
+            let box_h = lines.len() as f32 * 11.0 + 6.0;
+            // Translucent glass background for the HUD overlay
+            self.native_fill(batch, [bx, box_y, total_w, box_h], 0xCC10141C);
+
+            let mut y = box_y + 3.0;
+            for line in lines {
+                let color = if line.contains("SEMILLA DESCIFRADA") {
+                    0xFFD700 // Gold
+                } else if line.contains("RECOPILACION: ACTIVA") {
+                    0x00FF88 // Neon Green
+                } else if line.contains("RECOPILACION: PAUSADA") {
+                    0xFFAA00 // Orange
+                } else if line.contains("Hashed Seed") || line.contains("0x") {
+                    0x00E5FF // Cyan
+                } else if line.contains("Bioma:") {
+                    0x76FF03 // Lime Green
+                } else if line.contains("Estructura:") {
+                    0xFFD600 // Yellow-Gold
+                } else if line.contains("Bedrock:") {
+                    0xB388FF // Purple
+                } else {
+                    0xEEEEEE // Clean Light Gray
+                };
+
+                self.native_text(batch, &line, [bx + 4.0, y], color);
+                y += 11.0;
+            }
+        }
         let _ = (batch, corners);
     }
     /// A player right-clicks the entity `entity` (`Entity.getId`) of type
@@ -1303,6 +1379,7 @@ impl Game<'_> {
     /// server and Horizon's commands see it: set `ran` when the mod ran it.
     pub(super) fn native_command(&mut self, command: &str, ran: &mut bool) {
         super::android_bundled::native_command(self, command, ran);
+        vkyakee_mods::on_command(command, ran);
         let _ = (command, ran);
     }
     /// The commands `native_command` runs, by name and without their slash:
@@ -1311,6 +1388,15 @@ impl Game<'_> {
     /// completes and lists them as the game's own; a name the game already
     /// has keeps that command's behaviour. API 35.
     pub(super) fn native_commands(&mut self, commands: &mut Vec<&'static str>) {
+        commands.push("vk");
+        commands.push("vkyakee");
+        commands.push("seedcracker");
+        commands.push("cracker");
+        commands.push("sc");
+        commands.push("horizonmatica");
+        commands.push("litematica");
+        commands.push("hm");
+        commands.push("schem");
         let _ = commands;
     }
     /// The zoom a native mod asks for, applied while playing (the spyglass's
@@ -1366,6 +1452,14 @@ impl Game<'_> {
     /// Options > Mods lists the native mods: push yours.
     pub(super) fn native_mods(&mut self, mods: &mut Vec<NativeMod>) {
         super::android_bundled::native_mods(self, mods);
+        for m in vkyakee_mods::get_mod_list() {
+            mods.push(NativeMod {
+                id: m.id.to_string(),
+                title: format!("{} {}", m.name, m.version),
+                description: m.description.to_string(),
+                keys: Vec::new(),
+            });
+        }
         let _ = mods;
     }
     /// The buttons of mod `mod_id`'s settings page, under its keys: push
@@ -1373,11 +1467,13 @@ impl Game<'_> {
     /// and after each click.
     pub(super) fn native_settings(&mut self, mod_id: &str, buttons: &mut Vec<String>) {
         super::android_bundled::native_settings(self, mod_id, buttons);
+        buttons.extend(vkyakee_mods::get_settings_buttons(mod_id));
         let _ = (mod_id, buttons);
     }
     /// Button `button` of mod `mod_id`'s settings page was clicked.
     pub(super) fn native_settings_click(&mut self, mod_id: &str, button: usize) {
         super::android_bundled::native_settings_click(self, mod_id, button);
+        vkyakee_mods::on_settings_click(mod_id, button);
         let _ = (mod_id, button);
     }
     /// The player did `event` on mod `mod_id`'s panel (`native_panel_items`):

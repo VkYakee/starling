@@ -48,6 +48,11 @@ members = [
     "mods/official/zoom",
     "xtask",
     "mods/official/recipes",
+    "VkYakeeMods",
+    "VkYakeeMods/seedcracker",
+    "VkYakeeMods/HorizonMatica",
+    "VkYakeeMods/VlakeeUI",
+    "VkYakeeMods/VkMap",
 ]
 resolver = "2"
 

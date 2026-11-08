@@ -1,0 +1,21 @@
+{
+  "mod.name": "SeedCracker Rust",
+  "mod.description": "Motor unificado de alta velocidad para obtención y descifrado de semillas de Minecraft en Rust",
+  "title.cracker": "Descifrador de Semillas",
+  "title.bedrock": "Descifrado de Bedrock del Nether",
+  "title.dungeon": "Descifrado de Mazmorras",
+  "title.pillars": "Descifrado de Pilares del End",
+  "title.structures": "Elevación por Estructuras",
+  "title.biomes": "Verificación de Biomas 64-bit",
+  "title.trees": "Descifrado por Árboles",
+  "status.starting": "Iniciando proceso de descifrado...",
+  "status.progress": "Progreso: {percent}% ({current}/{total})",
+  "status.found_structure_seed": "¡Semilla de estructura encontrada: {seed}!",
+  "status.found_world_seed": "¡Semilla de mundo (64-bit) encontrada: {seed}!",
+  "status.pillar_seed_found": "Semilla de pilares encontrada: {seed}",
+  "status.bedrock_seed_found": "Semilla de bedrock encontrada: {seed}",
+  "status.failed": "No se encontraron coincidencias con los datos suministrados.",
+  "status.benchmarking": "Ejecutando pruebas de rendimiento con datos reales de Nether Bedrock...",
+  "cli.usage": "Uso: seedcracker <comando> [argumentos...]",
+  "cli.available_commands": "Comandos disponibles: bedrock, dungeon, pillars, structures, tree, lift, benchmark, interactive, lang"
+}

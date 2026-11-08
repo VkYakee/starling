@@ -1,0 +1,746 @@
+ .gitignore                       |     3 [32m+[m
+ Cargo.lock                       |   133 [32m+[m[31m-[m
+ Cargo.toml                       |     5 [32m+[m
+ VkYakeeMods/Cargo.toml           |    18 [32m+[m
+ .../HorizonMatica/Cargo.lock     |   340 [32m+[m
+ .../HorizonMatica/Cargo.toml     |    14 [32m+[m
+ .../HorizonMatica/LICENSE.txt    |   165 [32m+[m
+ .../HorizonMatica/README.md      |   178 [32m+[m
+ .../black_glass_fallback.json    |     7 [32m+[m
+ ...lack_glass_pane_fallback.json |    77 [32m+[m
+ .../blue_glass_fallback.json     |     7 [32m+[m
+ ...blue_glass_pane_fallback.json |    77 [32m+[m
+ .../brown_glass_fallback.json    |     7 [32m+[m
+ ...rown_glass_pane_fallback.json |    77 [32m+[m
+ .../cyan_glass_fallback.json     |     7 [32m+[m
+ ...cyan_glass_pane_fallback.json |    77 [32m+[m
+ .../glass_fallback.json          |     7 [32m+[m
+ .../glass_pane_fallback.json     |    77 [32m+[m
+ .../gray_glass_fallback.json     |     7 [32m+[m
+ ...gray_glass_pane_fallback.json |    77 [32m+[m
+ .../green_glass_fallback.json    |     7 [32m+[m
+ ...reen_glass_pane_fallback.json |    77 [32m+[m
+ .../lime_glass_fallback.json     |     7 [32m+[m
+ ...lime_glass_pane_fallback.json |    77 [32m+[m
+ .../lt_blue_glass_fallback.json  |     7 [32m+[m
+ ...blue_glass_pane_fallback.json |    77 [32m+[m
+ .../lt_gray_glass_fallback.json  |     7 [32m+[m
+ ...gray_glass_pane_fallback.json |    77 [32m+[m
+ .../magenta_glass_fallback.json  |     7 [32m+[m
+ ...enta_glass_pane_fallback.json |    77 [32m+[m
+ .../orange_glass_fallback.json   |     7 [32m+[m
+ ...ange_glass_pane_fallback.json |    77 [32m+[m
+ .../pink_glass_fallback.json     |     7 [32m+[m
+ ...pink_glass_pane_fallback.json |    77 [32m+[m
+ .../purple_glass_fallback.json   |     7 [32m+[m
+ ...rple_glass_pane_fallback.json |    77 [32m+[m
+ .../red_glass_fallback.json      |     7 [32m+[m
+ .../red_glass_pane_fallback.json |    77 [32m+[m
+ .../tinted_glass_fallback.json   |     7 [32m+[m
+ .../white_glass_fallback.json    |     7 [32m+[m
+ ...hite_glass_pane_fallback.json |    77 [32m+[m
+ .../yellow_glass_fallback.json   |     7 [32m+[m
+ ...llow_glass_pane_fallback.json |    77 [32m+[m
+ .../assets/litematica/icon.png   |   Bin [31m0[m -> [32m291[m bytes
+ .../litematica/lang/en_us.json   |  1186 [32m+[m
+ .../litematica/lang/es_es.json   |  1186 [32m+[m
+ .../litematica/lang/fr_fr.json   |  1186 [32m+[m
+ .../litematica/lang/it_it.json   |  1186 [32m+[m
+ .../litematica/lang/ja_jp.json   |  1186 [32m+[m
+ .../litematica/lang/ko_kr.json   |  1186 [32m+[m
+ .../litematica/lang/lzh.json     |  1186 [32m+[m
+ .../litematica/lang/nl_nl.json   |  1186 [32m+[m
+ .../litematica/lang/pt_br.json   |  1186 [32m+[m
+ .../litematica/lang/ru_ru.json   |  1186 [32m+[m
+ .../litematica/lang/sv_se.json   |  1186 [32m+[m
+ .../litematica/lang/tr_tr.json   |  1186 [32m+[m
+ .../litematica/lang/uk_ua.json   |  1186 [32m+[m
+ .../litematica/lang/zh_cn.json   |  1186 [32m+[m
+ .../litematica/lang/zh_tw.json   |  1186 [32m+[m
+ .../black_glass_fallback.json    |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../blue_glass_fallback.json     |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../brown_glass_fallback.json    |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../cyan_glass_fallback.json     |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../block/glass_fallback.json    |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../gray_glass_fallback.json     |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../green_glass_fallback.json    |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../lime_glass_fallback.json     |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../lt_blue_glass_fallback.json  |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../lt_gray_glass_fallback.json  |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../magenta_glass_fallback.json  |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../orange_glass_fallback.json   |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../pink_glass_fallback.json     |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../purple_glass_fallback.json   |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../red_glass_fallback.json      |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ ...ass_pane_fallback_noside.json |    14 [32m+[m
+ ...pane_fallback_noside_alt.json |    14 [32m+[m
+ ...glass_pane_fallback_post.json |    15 [32m+[m
+ ...glass_pane_fallback_side.json |    18 [32m+[m
+ ...s_pane_fallback_side_alt.json |    18 [32m+[m
+ .../tinted_glass_fallback.json   |     6 [32m+[m
+ .../white_glass_fallback.json    |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../yellow_glass_fallback.json   |     9 [32m+[m
+ ...ass_pane_fallback_noside.json |     9 [32m+[m
+ ...pane_fallback_noside_alt.json |     9 [32m+[m
+ ...glass_pane_fallback_post.json |    13 [32m+[m
+ ...glass_pane_fallback_side.json |    13 [32m+[m
+ ...s_pane_fallback_side_alt.json |    13 [32m+[m
+ .../core/legacy_terrain.fsh      |    53 [32m+[m
+ .../core/legacy_terrain.vsh      |    43 [32m+[m
+ .../legacy_terrain_fix.glsl      |     7 [32m+[m
+ .../black_glass_fallback.png     |   Bin [31m0[m -> [32m100[m bytes
+ ...k_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m100[m bytes
+ .../blue_glass_fallback.png      |   Bin [31m0[m -> [32m106[m bytes
+ ...e_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../brown_glass_fallback.png     |   Bin [31m0[m -> [32m105[m bytes
+ ...n_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m117[m bytes
+ .../cyan_glass_fallback.png      |   Bin [31m0[m -> [32m106[m bytes
+ ...n_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../block/glass_fallback.png     |   Bin [31m0[m -> [32m147[m bytes
+ .../glass_pane_fallback_top.png  |   Bin [31m0[m -> [32m114[m bytes
+ .../gray_glass_fallback.png      |   Bin [31m0[m -> [32m100[m bytes
+ ...y_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m103[m bytes
+ .../green_glass_fallback.png     |   Bin [31m0[m -> [32m105[m bytes
+ ...n_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m117[m bytes
+ .../lime_glass_fallback.png      |   Bin [31m0[m -> [32m106[m bytes
+ ...e_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m117[m bytes
+ .../lt_blue_glass_fallback.png   |   Bin [31m0[m -> [32m106[m bytes
+ ...e_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../lt_gray_glass_fallback.png   |   Bin [31m0[m -> [32m100[m bytes
+ ...y_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m103[m bytes
+ .../magenta_glass_fallback.png   |   Bin [31m0[m -> [32m106[m bytes
+ ...a_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../orange_glass_fallback.png    |   Bin [31m0[m -> [32m106[m bytes
+ ...e_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../pink_glass_fallback.png      |   Bin [31m0[m -> [32m106[m bytes
+ ...k_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../purple_glass_fallback.png    |   Bin [31m0[m -> [32m106[m bytes
+ ...e_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../block/red_glass_fallback.png |   Bin [31m0[m -> [32m106[m bytes
+ ...d_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../tinted_glass_fallback.png    |   Bin [31m0[m -> [32m167[m bytes
+ .../white_glass_fallback.png     |   Bin [31m0[m -> [32m100[m bytes
+ ...e_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m104[m bytes
+ .../yellow_glass_fallback.png    |   Bin [31m0[m -> [32m106[m bytes
+ ...w_glass_pane_fallback_top.png |   Bin [31m0[m -> [32m118[m bytes
+ .../textures/gui/gui_widgets.png |   Bin [31m0[m -> [32m11780[m bytes
+ .../textures/xcf/gui_widgets.xcf |   Bin [31m0[m -> [32m82371[m bytes
+ .../sample.litematic             |   Bin [31m0[m -> [32m340[m bytes
+ .../HorizonMatica/src/assets.rs  |   147 [32m+[m
+ .../src/config/colors.rs         |    46 [32m+[m
+ .../src/config/generic.rs        |    37 [32m+[m
+ .../src/config/hotkeys.rs        |    36 [32m+[m
+ .../src/config/info_overlays.rs  |    24 [32m+[m
+ .../src/config/mod.rs            |    42 [32m+[m
+ .../src/config/visuals.rs        |    32 [32m+[m
+ .../HorizonMatica/src/lib.rs     |    17 [32m+[m
+ .../src/materials/exporter.rs    |    44 [32m+[m
+ .../src/materials/inventory.rs   |    58 [32m+[m
+ .../materials/material_list.rs   |   107 [32m+[m
+ .../src/materials/mod.rs         |     7 [32m+[m
+ .../src/network/mod.rs           |     3 [32m+[m
+ .../src/network/packet.rs        |    98 [32m+[m
+ .../src/schematic/bit_array.rs   |   125 [32m+[m
+ .../src/schematic/container.rs   |   170 [32m+[m
+ .../src/schematic/conversion.rs  |   239 [32m+[m
+ .../src/schematic/litematic.rs   |   289 [32m+[m
+ .../src/schematic/metadata.rs    |    59 [32m+[m
+ .../src/schematic/mini_render.rs |   191 [32m+[m
+ .../src/schematic/mod.rs         |    21 [32m+[m
+ .../src/schematic/palette.rs     |   149 [32m+[m
+ .../src/schematic/placement.rs   |   168 [32m+[m
+ .../src/schematic/projects.rs    |    95 [32m+[m
+ .../src/schematic/verifier.rs    |   167 [32m+[m
+ .../selection/area_selection.rs  |    68 [32m+[m
+ .../src/selection/box_region.rs  |    63 [32m+[m
+ .../src/selection/manager.rs     |    45 [32m+[m
+ .../src/selection/mod.rs         |     7 [32m+[m
+ .../src/tool/mod.rs              |     3 [32m+[m
+ .../src/tool/mode.rs             |    90 [32m+[m
+ .../src/util/easy_place.rs       |    85 [32m+[m
+ .../src/util/layer.rs            |    89 [32m+[m
+ .../src/util/mod.rs              |     7 [32m+[m
+ .../src/util/pos.rs              |   238 [32m+[m
+ VkYakeeMods/README.md            |   482 [32m+[m
+ VkYakeeMods/VkMap/Cargo.toml     |    17 [32m+[m
+ .../annotation_circle.png        |   Bin [31m0[m -> [32m913[m bytes
+ .../annotation_freehand.png      |   Bin [31m0[m -> [32m802[m bytes
+ .../annotation_line.png          |   Bin [31m0[m -> [32m469[m bytes
+ .../annotation_rectangle.png     |   Bin [31m0[m -> [32m439[m bytes
+ .../annotations/measure.png      |   Bin [31m0[m -> [32m823[m bytes
+ .../colors/biome_colors.txt      |   216 [32m+[m
+ .../biome_rainfall_temp.txt      |   108 [32m+[m
+ .../colors/block_colors.txt      | 19769 [32m+++++++[m
+ .../colors/standard_colors.txt   | 19769 [32m+++++++[m
+ .../frames/classic_round.png     |   Bin [31m0[m -> [32m15803[m bytes
+ .../frames/classic_square.png    |   Bin [31m0[m -> [32m352[m bytes
+ .../frames/minecraft_round.png   |   Bin [31m0[m -> [32m13492[m bytes
+ .../frames/minecraft_square.png  |   Bin [31m0[m -> [32m327[m bytes
+ .../frames/round_map_stencil.png |   Bin [31m0[m -> [32m1660[m bytes
+ .../square_map_stencil.png       |   Bin [31m0[m -> [32m721[m bytes
+ .../VkMap/assets/markers/bed.png |   Bin [31m0[m -> [32m170[m bytes
+ .../assets/markers/contact.png   |   Bin [31m0[m -> [32m176[m bytes
+ .../markers/contact_facing.png   |   Bin [31m0[m -> [32m193[m bytes
+ .../assets/markers/diamond.png   |   Bin [31m0[m -> [32m774[m bytes
+ .../assets/markers/hostile.png   |   Bin [31m0[m -> [32m570[m bytes
+ .../assets/markers/house.png     |   Bin [31m0[m -> [32m297[m bytes
+ .../markers/minimap_arrow.png    |   Bin [31m0[m -> [32m1055[m bytes
+ .../assets/markers/neutral.png   |   Bin [31m0[m -> [32m282[m bytes
+ .../assets/markers/pickaxe.png   |   Bin [31m0[m -> [32m994[m bytes
+ .../assets/markers/portal.png    |   Bin [31m0[m -> [32m156[m bytes
+ .../assets/markers/skull.png     |   Bin [31m0[m -> [32m231[m bytes
+ .../assets/markers/star.png      |   Bin [31m0[m -> [32m727[m bytes
+ .../assets/markers/treasure.png  |   Bin [31m0[m -> [32m159[m bytes
+ .../src/annotations/manager.rs   |   148 [32m+[m
+ .../VkMap/src/annotations/mod.rs |     5 [32m+[m
+ .../src/annotations/shape.rs     |   101 [32m+[m
+ .../VkMap/src/color/biome.rs     |   208 [32m+[m
+ .../VkMap/src/color/mod.rs       |     7 [32m+[m
+ .../VkMap/src/color/palette.rs   |   302 [32m+[m
+ .../VkMap/src/color/shading.rs   |   126 [32m+[m
+ VkYakeeMods/VkMap/src/export.rs  |   144 [32m+[m
+ .../VkMap/src/hud/coordinates.rs |   132 [32m+[m
+ .../VkMap/src/hud/minimap.rs     |   246 [32m+[m
+ VkYakeeMods/VkMap/src/hud/mod.rs |     7 [32m+[m
+ .../src/hud/touch_widgets.rs     |   164 [32m+[m
+ VkYakeeMods/VkMap/src/lib.rs     |   249 [32m+[m
+ .../VkMap/src/radar/entity.rs    |   178 [32m+[m
+ .../VkMap/src/radar/mod.rs       |     7 [32m+[m
+ .../VkMap/src/radar/renderer.rs  |    88 [32m+[m
+ .../VkMap/src/radar/tracker.rs   |   248 [32m+[m
+ .../src/render/cave_mode.rs      |   105 [32m+[m
+ .../src/render/chunk_scanner.rs  |   235 [32m+[m
+ .../src/render/image_buffer.rs   |   307 [32m+[m
+ .../src/render/isometric.rs      |   146 [32m+[m
+ .../VkMap/src/render/lighting.rs |   141 [32m+[m
+ .../VkMap/src/render/mod.rs      |    15 [32m+[m
+ .../src/render/perspective.rs    |    55 [32m+[m
+ .../render/structure_analyzer.rs |   138 [32m+[m
+ .../VkMap/src/storage/cache.rs   |    81 [32m+[m
+ .../VkMap/src/storage/mod.rs     |     7 [32m+[m
+ .../src/storage/persistence.rs   |   123 [32m+[m
+ .../VkMap/src/storage/tile.rs    |   102 [32m+[m
+ .../src/structure_bridge.rs      |   266 [32m+[m
+ .../src/waypoints/manager.rs     |   237 [32m+[m
+ .../VkMap/src/waypoints/mod.rs   |     7 [32m+[m
+ .../src/waypoints/teleport.rs    |    59 [32m+[m
+ .../src/waypoints/waypoint.rs    |   167 [32m+[m
+ VkYakeeMods/VlakeeUI/Cargo.toml  |    14 [32m+[m
+ .../Changelog_deesse.txt         |   440 [32m+[m
+ .../VlakeeUI/Credits_deesse.txt  |    12 [32m+[m
+ VkYakeeMods/VlakeeUI/README.md   |   158 [32m+[m
+ .../assets/materials/ui.material |     1 [32m+[m
+ .../assets/pack_banner.png       |   Bin [31m0[m -> [32m64654[m bytes
+ .../assets/pack_icon.png         |   Bin [31m0[m -> [32m40137[m bytes
+ .../sounds/random/release.ogg    |   Bin [31m0[m -> [32m23381[m bytes
+ .../sound_definitions.json       |     1 [32m+[m
+ .../assets/texts/en_US.lang      |   866 [32m+[m
+ .../assets/texts/es_ES.lang      |     3 [32m+[m
+ .../assets/texts/id_ID.lang      |     1 [32m+[m
+ .../assets/texts/ko_KR.lang      |     1 [32m+[m
+ .../texts/language_names.json    |     1 [32m+[m
+ .../assets/texts/ru_RU.lang      |     2 [32m+[m
+ .../assets/texts/zh_CN.lang      |     1 [32m+[m
+ .../assets/texts/zh_TW.lang      |     1 [32m+[m
+ .../about_ui.png"                |   Bin [31m0[m -> [32m194[m bytes
+ .../arrow_down.png"              |   Bin [31m0[m -> [32m98[m bytes
+ .../arrow_right.png"             |   Bin [31m0[m -> [32m87[m bytes
+ .../auto_place.png"              |   Bin [31m0[m -> [32m155[m bytes
+ .../d\303\251esse_ui/banner.png" |   Bin [31m0[m -> [32m1045[m bytes
+ .../d\303\251esse_ui/blank.png"  |   Bin [31m0[m -> [32m88[m bytes
+ .../blur_effect.json"            |     7 [32m+[m
+ .../blur_effect.png"             |   Bin [31m0[m -> [32m6553[m bytes
+ .../border.json"                 |     7 [32m+[m
+ .../d\303\251esse_ui/border.png" |   Bin [31m0[m -> [32m131[m bytes
+ ...ightness_decrease_button.png" |   Bin [31m0[m -> [32m216[m bytes
+ ...ightness_increase_button.png" |   Bin [31m0[m -> [32m231[m bytes
+ ...n_borderless_dark_hover.json" |     7 [32m+[m
+ ...on_borderless_dark_hover.png" |   Bin [31m0[m -> [32m100[m bytes
+ ...borderless_dark_pressed.json" |     7 [32m+[m
+ ..._borderless_dark_pressed.png" |   Bin [31m0[m -> [32m99[m bytes
+ .../calculator.png"              |   Bin [31m0[m -> [32m237[m bytes
+ .../d\303\251esse_ui/chat.png"   |   Bin [31m0[m -> [32m160[m bytes
+ .../chunk_height_bg.json"        |     7 [32m+[m
+ .../chunk_height_bg.png"         |   Bin [31m0[m -> [32m92[m bytes
+ .../chunk_line.png"              |   Bin [31m0[m -> [32m202[m bytes
+ .../chunk_background.json"       |     8 [32m+[m
+ .../chunk_background.png"        |   Bin [31m0[m -> [32m213[m bytes
+ .../chunk_border.png"            |   Bin [31m0[m -> [32m2428[m bytes
+ .../chunk_inner_background.json" |     8 [32m+[m
+ .../chunk_inner_background.png"  |   Bin [31m0[m -> [32m89[m bytes
+ .../chunk_viewer/chunk_line.png" |   Bin [31m0[m -> [32m111[m bytes
+ .../slime/slime_1_1.png"         |   Bin [31m0[m -> [32m29801[m bytes
+ .../slime/slime_1_2.png"         |   Bin [31m0[m -> [32m30066[m bytes
+ .../slime/slime_1_3.png"         |   Bin [31m0[m -> [32m30054[m bytes
+ .../slime/slime_1_4.png"         |   Bin [31m0[m -> [32m29836[m bytes
+ .../slime/slime_1_5.png"         |   Bin [31m0[m -> [32m29930[m bytes
+ .../slime/slime_1_6.png"         |   Bin [31m0[m -> [32m30091[m bytes
+ .../slime/slime_1_7.png"         |   Bin [31m0[m -> [32m30007[m bytes
+ .../slime/slime_2_1.png"         |   Bin [31m0[m -> [32m30384[m bytes
+ .../slime/slime_2_2.png"         |   Bin [31m0[m -> [32m30014[m bytes
+ .../slime/slime_2_3.png"         |   Bin [31m0[m -> [32m30173[m bytes
+ .../slime/slime_2_4.png"         |   Bin [31m0[m -> [32m30180[m bytes
+ .../slime/slime_2_5.png"         |   Bin [31m0[m -> [32m30342[m bytes
+ .../slime/slime_2_6.png"         |   Bin [31m0[m -> [32m30099[m bytes
+ .../slime/slime_2_7.png"         |   Bin [31m0[m -> [32m30097[m bytes
+ .../slime/slime_3_1.png"         |   Bin [31m0[m -> [32m30195[m bytes
+ .../slime/slime_3_2.png"         |   Bin [31m0[m -> [32m30161[m bytes
+ .../slime/slime_3_3.png"         |   Bin [31m0[m -> [32m30257[m bytes
+ .../slime/slime_3_4.png"         |   Bin [31m0[m -> [32m30198[m bytes
+ .../slime/slime_3_5.png"         |   Bin [31m0[m -> [32m30161[m bytes
+ .../slime/slime_3_6.png"         |   Bin [31m0[m -> [32m30276[m bytes
+ .../slime/slime_3_7.png"         |   Bin [31m0[m -> [32m30213[m bytes
+ .../slime/slime_4_1.png"         |   Bin [31m0[m -> [32m30338[m bytes
+ .../slime/slime_4_2.png"         |   Bin [31m0[m -> [32m30302[m bytes
+ .../slime/slime_4_3.png"         |   Bin [31m0[m -> [32m30225[m bytes
+ .../slime/slime_4_4.png"         |   Bin [31m0[m -> [32m30404[m bytes
+ .../slime/slime_4_5.png"         |   Bin [31m0[m -> [32m30228[m bytes
+ .../slime/slime_4_6.png"         |   Bin [31m0[m -> [32m30264[m bytes
+ .../slime/slime_4_7.png"         |   Bin [31m0[m -> [32m30240[m bytes
+ .../slime/slime_5_1.png"         |   Bin [31m0[m -> [32m30287[m bytes
+ .../slime/slime_5_2.png"         |   Bin [31m0[m -> [32m30221[m bytes
+ .../slime/slime_5_3.png"         |   Bin [31m0[m -> [32m30070[m bytes
+ .../slime/slime_5_4.png"         |   Bin [31m0[m -> [32m30257[m bytes
+ .../slime/slime_5_5.png"         |   Bin [31m0[m -> [32m30200[m bytes
+ .../slime/slime_5_6.png"         |   Bin [31m0[m -> [32m30166[m bytes
+ .../slime/slime_5_7.png"         |   Bin [31m0[m -> [32m30169[m bytes
+ .../slime/slime_6_1.png"         |   Bin [31m0[m -> [32m30245[m bytes
+ .../slime/slime_6_2.png"         |   Bin [31m0[m -> [32m30113[m bytes
+ .../slime/slime_6_3.png"         |   Bin [31m0[m -> [32m30186[m bytes
+ .../slime/slime_6_4.png"         |   Bin [31m0[m -> [32m30249[m bytes
+ .../slime/slime_6_5.png"         |   Bin [31m0[m -> [32m30062[m bytes
+ .../slime/slime_6_6.png"         |   Bin [31m0[m -> [32m29995[m bytes
+ .../slime/slime_6_7.png"         |   Bin [31m0[m -> [32m30243[m bytes
+ .../slime/slime_7_1.png"         |   Bin [31m0[m -> [32m30054[m bytes
+ .../slime/slime_7_2.png"         |   Bin [31m0[m -> [32m30028[m bytes
+ .../slime/slime_7_3.png"         |   Bin [31m0[m -> [32m30079[m bytes
+ .../slime/slime_7_4.png"         |   Bin [31m0[m -> [32m29954[m bytes
+ .../slime/slime_7_5.png"         |   Bin [31m0[m -> [32m30167[m bytes
+ .../slime/slime_7_6.png"         |   Bin [31m0[m -> [32m30042[m bytes
+ .../slime/slime_7_7.png"         |   Bin [31m0[m -> [32m29996[m bytes
+ .../crafter_disabled.png"        |   Bin [31m0[m -> [32m164[m bytes
+ .../crafter_enabled.png"         |   Bin [31m0[m -> [32m153[m bytes
+ .../crafter_flip.png"            |   Bin [31m0[m -> [32m148[m bytes
+ .../crafting.png"                |   Bin [31m0[m -> [32m238[m bytes
+ .../d\303\251esse_ui/cross.png"  |   Bin [31m0[m -> [32m144[m bytes
+ .../day_highlight_bg.png"        |   Bin [31m0[m -> [32m262[m bytes
+ .../day_highlight_item_bg.png"   |   Bin [31m0[m -> [32m139[m bytes
+ .../default.png"                 |   Bin [31m0[m -> [32m172[m bytes
+ .../destroy.png"                 |   Bin [31m0[m -> [32m158[m bytes
+ .../down_icon.png"               |   Bin [31m0[m -> [32m174[m bytes
+ .../d\303\251esse_ui/drag.png"   |   Bin [31m0[m -> [32m143[m bytes
+ .../d\303\251esse_ui/drop.png"   |   Bin [31m0[m -> [32m133[m bytes
+ .../d\303\251esse_hud_icon.png"  |   Bin [31m0[m -> [32m242[m bytes
+ .../bna_1.png"                   |   Bin [31m0[m -> [32m62833[m bytes
+ .../bna_2.png"                   |   Bin [31m0[m -> [32m37149[m bytes
+ .../bna_3.png"                   |   Bin [31m0[m -> [32m41450[m bytes
+ .../bna_4.png"                   |   Bin [31m0[m -> [32m40408[m bytes
+ ...d\303\251esse_louve_logo.png" |   Bin [31m0[m -> [32m132406[m bytes
+ .../nazuna.png"                  |   Bin [31m0[m -> [32m97069[m bytes
+ .../effect_border_ambient.json"  |     1 [32m+[m
+ .../effect_border_ambient.png"   |   Bin [31m0[m -> [32m112[m bytes
+ .../exclude_slots.png"           |   Bin [31m0[m -> [32m146[m bytes
+ .../d\303\251esse_ui/folder.png" |   Bin [31m0[m -> [32m125[m bytes
+ .../gold_sword.png"              |   Bin [31m0[m -> [32m225[m bytes
+ .../d\303\251esse_ui/grid.png"   |   Bin [31m0[m -> [32m95[m bytes
+ .../hamburger.png"               |   Bin [31m0[m -> [32m103[m bytes
+ .../hotbar_left.png"             |   Bin [31m0[m -> [32m246[m bytes
+ .../hotbar_left_pressed.png"     |   Bin [31m0[m -> [32m269[m bytes
+ .../hotbar_right.png"            |   Bin [31m0[m -> [32m248[m bytes
+ .../hotbar_right_pressed.png"    |   Bin [31m0[m -> [32m269[m bytes
+ .../hotbar_swither_icon.png"     |   Bin [31m0[m -> [32m170[m bytes
+ .../hover_mode.png"              |   Bin [31m0[m -> [32m134[m bytes
+ .../brightness_overlay.png"      |   Bin [31m0[m -> [32m253[m bytes
+ .../hud_menu_icon/chunk_map.png" |   Bin [31m0[m -> [32m421[m bytes
+ .../clock_compass.png"           |   Bin [31m0[m -> [32m212[m bytes
+ .../hud_menu_icon/cross.png"     |   Bin [31m0[m -> [32m204[m bytes
+ .../debug_screen.png"            |   Bin [31m0[m -> [32m245[m bytes
+ .../hud_menu_icon/hide_chat.png" |   Bin [31m0[m -> [32m174[m bytes
+ .../hide_coordinates.png"        |   Bin [31m0[m -> [32m169[m bytes
+ .../hud_menu_icon/hide_gui.png"  |   Bin [31m0[m -> [32m397[m bytes
+ .../hide_scoreboardSidebar.png"  |   Bin [31m0[m -> [32m230[m bytes
+ .../hotbar_switcher.png"         |   Bin [31m0[m -> [32m246[m bytes
+ .../inventory_hud.png"           |   Bin [31m0[m -> [32m311[m bytes
+ .../item_id_edit.png"            |   Bin [31m0[m -> [32m170[m bytes
+ .../item_information.png"        |   Bin [31m0[m -> [32m332[m bytes
+ .../brightness_overlay.png"      |   Bin [31m0[m -> [32m334[m bytes
+ .../ore_ui/chunk_map.png"        |   Bin [31m0[m -> [32m421[m bytes
+ .../ore_ui/clock_compass.png"    |   Bin [31m0[m -> [32m374[m bytes
+ .../ore_ui/debug_screen.png"     |   Bin [31m0[m -> [32m245[m bytes
+ .../empty_slot_counter.png"      |   Bin [31m0[m -> [32m311[m bytes
+ .../ore_ui/hide_chat.png"        |   Bin [31m0[m -> [32m235[m bytes
+ .../ore_ui/hide_coordinates.png" |   Bin [31m0[m -> [32m245[m bytes
+ .../ore_ui/hide_gui.png"         |   Bin [31m0[m -> [32m397[m bytes
+ .../hide_scoreboardSidebar.png"  |   Bin [31m0[m -> [32m230[m bytes
+ .../ore_ui/hotbar_switcher.png"  |   Bin [31m0[m -> [32m251[m bytes
+ .../ore_ui/inventory_hud.png"    |   Bin [31m0[m -> [32m311[m bytes
+ .../ore_ui/item_id_edit.png"     |   Bin [31m0[m -> [32m260[m bytes
+ .../ore_ui/item_information.png" |   Bin [31m0[m -> [32m400[m bytes
+ .../ore_ui/paperdoll.png"        |   Bin [31m0[m -> [32m430[m bytes
+ .../ore_ui/player_list.png"      |   Bin [31m0[m -> [32m406[m bytes
+ .../ore_ui/recovery_compass.png" |   Bin [31m0[m -> [32m4802[m bytes
+ .../hud_menu_icon/paperdoll.png" |   Bin [31m0[m -> [32m430[m bytes
+ .../player_list.png"             |   Bin [31m0[m -> [32m406[m bytes
+ .../recovery_compass.png"        |   Bin [31m0[m -> [32m4802[m bytes
+ .../icon_container.png"          |   Bin [31m0[m -> [32m118[m bytes
+ .../icon_hotbar.png"             |   Bin [31m0[m -> [32m101[m bytes
+ .../icon_inventory.png"          |   Bin [31m0[m -> [32m110[m bytes
+ .../inventory_icon.png"          |   Bin [31m0[m -> [32m376[m bytes
+ ...item_tootip_display_icon.png" |   Bin [31m0[m -> [32m147[m bytes
+ .../d\303\251esse_ui/join.png"   |   Bin [31m0[m -> [32m106[m bytes
+ .../loading_square.png"          |   Bin [31m0[m -> [32m192[m bytes
+ .../d\303\251esse_ui/locked.png" |   Bin [31m0[m -> [32m114[m bytes
+ .../magnifying_glass.png"        |   Bin [31m0[m -> [32m181[m bytes
+ .../d\303\251esse_ui/more.png"   |   Bin [31m0[m -> [32m85[m bytes
+ .../move_items_column_icon.png"  |   Bin [31m0[m -> [32m162[m bytes
+ .../music_player.png"            |   Bin [31m0[m -> [32m294[m bytes
+ .../ore_ui/bounding.png"         |   Bin [31m0[m -> [32m116[m bytes
+ .../ore_ui/bounding_disable.png" |   Bin [31m0[m -> [32m140[m bytes
+ .../back_button_icon.png"        |   Bin [31m0[m -> [32m115[m bytes
+ .../bg_button_black.json"        |    12 [32m+[m
+ .../buttons/bg_button_black.png" |   Bin [31m0[m -> [32m103[m bytes
+ .../button_borderless_dark.json" |     7 [32m+[m
+ .../button_borderless_dark.png"  |   Bin [31m0[m -> [32m130[m bytes
+ ...on_borderless_darkhover.json" |     7 [32m+[m
+ ...ton_borderless_darkhover.png" |   Bin [31m0[m -> [32m129[m bytes
+ ..._borderless_darkpressed.json" |     7 [32m+[m
+ ...n_borderless_darkpressed.png" |   Bin [31m0[m -> [32m130[m bytes
+ ...less_darkpressednohover.json" |     7 [32m+[m
+ ...rless_darkpressednohover.png" |   Bin [31m0[m -> [32m130[m bytes
+ ...button_borderless_green.json" |     7 [32m+[m
+ .../button_borderless_green.png" |   Bin [31m0[m -> [32m139[m bytes
+ ...n_borderless_greenhover.json" |     7 [32m+[m
+ ...on_borderless_greenhover.png" |   Bin [31m0[m -> [32m129[m bytes
+ ...borderless_greenpressed.json" |     7 [32m+[m
+ ..._borderless_greenpressed.png" |   Bin [31m0[m -> [32m131[m bytes
+ ...button_borderless_light.json" |     7 [32m+[m
+ .../button_borderless_light.png" |   Bin [31m0[m -> [32m139[m bytes
+ ...n_borderless_lighthover.json" |     7 [32m+[m
+ ...on_borderless_lighthover.png" |   Bin [31m0[m -> [32m129[m bytes
+ ..._borderless_lightlocked.json" |     7 [32m+[m
+ ...n_borderless_lightlocked.png" |   Bin [31m0[m -> [32m100[m bytes
+ ...borderless_lightpressed.json" |     7 [32m+[m
+ ..._borderless_lightpressed.png" |   Bin [31m0[m -> [32m132[m bytes
+ ...ess_lightpressednohover.json" |     7 [32m+[m
+ ...less_lightpressednohover.png" |   Bin [31m0[m -> [32m171[m bytes
+ ...utton_borderless_realms.json" |     7 [32m+[m
+ ...button_borderless_realms.png" |   Bin [31m0[m -> [32m140[m bytes
+ ..._borderless_realmshover.json" |     7 [32m+[m
+ ...n_borderless_realmshover.png" |   Bin [31m0[m -> [32m129[m bytes
+ ...orderless_realmspressed.json" |     7 [32m+[m
+ ...borderless_realmspressed.png" |   Bin [31m0[m -> [32m132[m bytes
+ .../button_borderless_red.json"  |     7 [32m+[m
+ .../button_borderless_red.png"   |   Bin [31m0[m -> [32m139[m bytes
+ ...ton_borderless_redhover.json" |     7 [32m+[m
+ ...tton_borderless_redhover.png" |   Bin [31m0[m -> [32m129[m bytes
+ ...n_borderless_redpressed.json" |     7 [32m+[m
+ ...on_borderless_redpressed.png" |   Bin [31m0[m -> [32m131[m bytes
+ .../button_header_light.json"    |     7 [32m+[m
+ .../button_header_light.png"     |   Bin [31m0[m -> [32m91[m bytes
+ ...utton_header_lighthover.json" |     7 [32m+[m
+ ...button_header_lighthover.png" |   Bin [31m0[m -> [32m129[m bytes
+ ...ton_header_lightpressed.json" |     7 [32m+[m
+ ...tton_header_lightpressed.png" |   Bin [31m0[m -> [32m129[m bytes
+ .../close_button_icon.png"       |   Bin [31m0[m -> [32m126[m bytes
+ .../minimize_button_icon.png"    |   Bin [31m0[m -> [32m101[m bytes
+ .../dialog_background.json"      |     4 [32m+[m
+ .../dialog_background.png"       |   Bin [31m0[m -> [32m123[m bytes
+ ...ialog_background_footer.json" |     4 [32m+[m
+ ...dialog_background_footer.png" |   Bin [31m0[m -> [32m112[m bytes
+ ...ialog_background_header.json" |     4 [32m+[m
+ ...dialog_background_header.png" |   Bin [31m0[m -> [32m127[m bytes
+ ...background_light_opaque.json" |     4 [32m+[m
+ ..._background_light_opaque.png" |   Bin [31m0[m -> [32m129[m bytes
+ .../ore_ui/icons/cross.png"      |   Bin [31m0[m -> [32m118[m bytes
+ .../ore_ui/icons/edit_icon.png"  |   Bin [31m0[m -> [32m151[m bytes
+ .../icons/friends_tab.png"       |   Bin [31m0[m -> [32m187[m bytes
+ .../ore_ui/icons/grid_icon.png"  |   Bin [31m0[m -> [32m114[m bytes
+ .../icons/import_world_icon.png" |   Bin [31m0[m -> [32m196[m bytes
+ .../ore_ui/icons/list_icon.png"  |   Bin [31m0[m -> [32m108[m bytes
+ .../ore_ui/icons/ping_green.png" |   Bin [31m0[m -> [32m110[m bytes
+ .../ore_ui/icons/ping_red.png"   |   Bin [31m0[m -> [32m115[m bytes
+ .../icons/ping_yellow.png"       |   Bin [31m0[m -> [32m115[m bytes
+ .../icons/player_online.png"     |   Bin [31m0[m -> [32m132[m bytes
+ .../ore_ui/icons/search.png"     |   Bin [31m0[m -> [32m125[m bytes
+ .../ore_ui/icons/server_tab.png" |   Bin [31m0[m -> [32m191[m bytes
+ .../icons/tab_glow_anim.png"     |   Bin [31m0[m -> [32m226[m bytes
+ .../ore_ui/icons/world_tab.png"  |   Bin [31m0[m -> [32m218[m bytes
+ .../misc/achievement_bottle.png" |   Bin [31m0[m -> [32m253[m bytes
+ .../ore_ui/misc/back_arrow.png"  |   Bin [31m0[m -> [32m115[m bytes
+ .../ore_ui/misc/border.json"     |     7 [32m+[m
+ .../ore_ui/misc/border.png"      |   Bin [31m0[m -> [32m131[m bytes
+ .../category_border_left.json"   |     7 [32m+[m
+ .../category_border_left.png"    |   Bin [31m0[m -> [32m118[m bytes
+ .../category_border_right.json"  |     7 [32m+[m
+ .../category_border_right.png"   |   Bin [31m0[m -> [32m100[m bytes
+ .../category_solid_left.json"    |     7 [32m+[m
+ .../category_solid_left.png"     |   Bin [31m0[m -> [32m116[m bytes
+ .../category_solid_right.json"   |     7 [32m+[m
+ .../category_solid_right.png"    |   Bin [31m0[m -> [32m99[m bytes
+ .../ore_ui/misc/copy.png"        |   Bin [31m0[m -> [32m126[m bytes
+ .../ore_ui/misc/expand.png"      |   Bin [31m0[m -> [32m132[m bytes
+ .../ore_ui/misc/eye.png"         |   Bin [31m0[m -> [32m123[m bytes
+ .../ore_ui/misc/gear.png"        |   Bin [31m0[m -> [32m295[m bytes
+ .../ore_ui/misc/paste.png"       |   Bin [31m0[m -> [32m129[m bytes
+ .../ore_ui/misc/play.png"        |   Bin [31m0[m -> [32m125[m bytes
+ .../misc/players_list.png"       |   Bin [31m0[m -> [32m119[m bytes
+ .../ore_ui/misc/radio_hover.png" |   Bin [31m0[m -> [32m3579[m bytes
+ .../ore_ui/misc/radio_off.png"   |   Bin [31m0[m -> [32m4424[m bytes
+ .../ore_ui/misc/radio_on.png"    |   Bin [31m0[m -> [32m4766[m bytes
+ .../ore_ui/misc/search.png"      |   Bin [31m0[m -> [32m125[m bytes
+ .../ore_ui/misc/settings.png"    |   Bin [31m0[m -> [32m127[m bytes
+ .../ore_ui/misc/stop.png"        |   Bin [31m0[m -> [32m106[m bytes
+ .../ore_ui/misc/text_box.json"   |     4 [32m+[m
+ .../ore_ui/misc/text_box.png"    |   Bin [31m0[m -> [32m155[m bytes
+ .../ore_ui/misc/three_dots.png"  |   Bin [31m0[m -> [32m85[m bytes
+ .../misc/tool_item_rend_bg.json" |     4 [32m+[m
+ .../misc/tool_item_rend_bg.png"  |   Bin [31m0[m -> [32m121[m bytes
+ .../ore_ui/open_browser.png"     |   Bin [31m0[m -> [32m130[m bytes
+ .../screens/bg_border.json"      |     7 [32m+[m
+ .../screens/bg_border.png"       |   Bin [31m0[m -> [32m92[m bytes
+ .../screens/bg_option.json"      |     7 [32m+[m
+ .../screens/bg_option.png"       |   Bin [31m0[m -> [32m103[m bytes
+ .../screens/bg_option_dark.json" |     7 [32m+[m
+ .../screens/bg_option_dark.png"  |   Bin [31m0[m -> [32m103[m bytes
+ .../screens/bg_title.json"       |     7 [32m+[m
+ .../ore_ui/screens/bg_title.png" |   Bin [31m0[m -> [32m139[m bytes
+ .../bg_title_bottom.json"        |     7 [32m+[m
+ .../screens/bg_title_bottom.png" |   Bin [31m0[m -> [32m141[m bytes
+ .../bg_title_bottom_dark.json"   |     7 [32m+[m
+ .../bg_title_bottom_dark.png"    |   Bin [31m0[m -> [32m113[m bytes
+ .../screens/bg_title_dark.json"  |     7 [32m+[m
+ .../screens/bg_title_dark.png"   |   Bin [31m0[m -> [32m116[m bytes
+ .../bg_title_dark_border.json"   |     7 [32m+[m
+ .../bg_title_dark_border.png"    |   Bin [31m0[m -> [32m113[m bytes
+ .../screens/listitem_hover.json" |     7 [32m+[m
+ .../screens/listitem_hover.png"  |   Bin [31m0[m -> [32m100[m bytes
+ .../screens/selector_bg.json"    |     7 [32m+[m
+ .../screens/selector_bg.png"     |   Bin [31m0[m -> [32m95[m bytes
+ .../topbar_filler_image.json"    |     4 [32m+[m
+ .../topbar_filler_image.png"     |   Bin [31m0[m -> [32m94[m bytes
+ .../screens/topbar_image.json"   |     7 [32m+[m
+ .../screens/topbar_image.png"    |   Bin [31m0[m -> [32m137[m bytes
+ .../slider_background.json"      |     7 [32m+[m
+ .../slider_background.png"       |   Bin [31m0[m -> [32m121[m bytes
+ .../slider_progress.json"        |     7 [32m+[m
+ .../sliders/slider_progress.png" |   Bin [31m0[m -> [32m133[m bytes
+ .../sliders/slider_step.png"     |   Bin [31m0[m -> [32m126[m bytes
+ .../toggles/toggle_off.png"      |   Bin [31m0[m -> [32m238[m bytes
+ .../toggle_off_hover.png"        |   Bin [31m0[m -> [32m237[m bytes
+ .../toggle_off_locked.png"       |   Bin [31m0[m -> [32m211[m bytes
+ .../toggles/toggle_on.png"       |   Bin [31m0[m -> [32m248[m bytes
+ .../toggles/toggle_on_hover.png" |   Bin [31m0[m -> [32m204[m bytes
+ .../ore_ui/warning.png"          |   Bin [31m0[m -> [32m128[m bytes
+ .../paper_notices.png"           |   Bin [31m0[m -> [32m324[m bytes
+ .../note_default.json"           |     7 [32m+[m
+ .../piano_note/note_default.png" |   Bin [31m0[m -> [32m139[m bytes
+ .../piano_note/note_hover.json"  |     7 [32m+[m
+ .../piano_note/note_hover.png"   |   Bin [31m0[m -> [32m129[m bytes
+ .../note_pressed.json"           |     7 [32m+[m
+ .../piano_note/note_pressed.png" |   Bin [31m0[m -> [32m132[m bytes
+ .../d\303\251esse_ui/pin.png"    |   Bin [31m0[m -> [32m187[m bytes
+ .../player_simple.png"           |   Bin [31m0[m -> [32m123[m bytes
+ .../rarity_highlight_0.png"      |   Bin [31m0[m -> [32m106[m bytes
+ .../rarity_highlight_1.png"      |   Bin [31m0[m -> [32m170[m bytes
+ .../rarity_highlight_2.png"      |   Bin [31m0[m -> [32m173[m bytes
+ .../rarity_highlight_3.png"      |   Bin [31m0[m -> [32m171[m bytes
+ .../restock.png"                 |   Bin [31m0[m -> [32m199[m bytes
+ .../d\303\251esse_ui/search.png" |   Bin [31m0[m -> [32m125[m bytes
+ .../shift_tab_icon.png"          |   Bin [31m0[m -> [32m164[m bytes
+ .../small_arrow_down.png"        |   Bin [31m0[m -> [32m110[m bytes
+ .../tab_icon.png"                |   Bin [31m0[m -> [32m183[m bytes
+ .../tools_ui.png"                |   Bin [31m0[m -> [32m170[m bytes
+ .../trash_can.png"               |   Bin [31m0[m -> [32m124[m bytes
+ .../d\303\251esse_ui/undo.png"   |   Bin [31m0[m -> [32m150[m bytes
+ .../unequip_armor.png"           |   Bin [31m0[m -> [32m106[m bytes
+ .../up_icon.png"                 |   Bin [31m0[m -> [32m160[m bytes
+ .../d\303\251esse_ui/utils.png"  |   Bin [31m0[m -> [32m133[m bytes
+ ...tle_lingering_slowFalling.png |   Bin [31m0[m -> [32m270[m bytes
+ ...potion_bottle_slowFalling.png |   Bin [31m0[m -> [32m297[m bytes
+ ...bottle_splash_slowFalling.png |   Bin [31m0[m -> [32m291[m bytes
+ .../VlakeeUI/src/calculator.rs   |    80 [32m+[m
+ .../VlakeeUI/src/chunk_viewer.rs |   164 [32m+[m
+ .../VlakeeUI/src/debug_f3.rs     |   320 [32m+[m
+ .../VlakeeUI/src/hud_renderer.rs |    86 [32m+[m
+ .../src/in_game_options.rs       |   418 [32m+[m
+ .../VlakeeUI/src/inv_hud.rs      |   183 [32m+[m
+ VkYakeeMods/VlakeeUI/src/lib.rs  |   144 [32m+[m
+ .../VlakeeUI/src/quick_craft.rs  |   208 [32m+[m
+ .../src/quick_toggles.rs         |   104 [32m+[m
+ .../src/smart_f3_more.rs         |   152 [32m+[m
+ ...ried_treasure_formation_1.bin |   Bin [31m0[m -> [32m9088[m bytes
+ ...ied_treasure_formation_10.bin |   Bin [31m0[m -> [32m144[m bytes
+ ...ried_treasure_formation_2.bin |   Bin [31m0[m -> [32m592[m bytes
+ ...ried_treasure_formation_3.bin |   Bin [31m0[m -> [32m4952[m bytes
+ ...ried_treasure_formation_4.bin |   Bin [31m0[m -> [32m55536[m bytes
+ ...ried_treasure_formation_5.bin |   Bin [31m0[m -> [32m9080[m bytes
+ ...ried_treasure_formation_6.bin |   Bin [31m0[m -> [32m17064[m bytes
+ ...ried_treasure_formation_7.bin |   Bin [31m0[m -> [32m55536[m bytes
+ ...ried_treasure_formation_8.bin |   Bin [31m0[m -> [32m3856[m bytes
+ ...ried_treasure_formation_9.bin |   Bin [31m0[m -> [32m1872[m bytes
+ .../seedcracker/Cargo.toml       |    16 [32m+[m
+ .../assets/examples/example.png  |   Bin [31m0[m -> [32m88210[m bytes
+ ...aper -8788534344520786540.txt |    27 [32m+[m
+ .../seed 765906787396911863.txt  |    36 [32m+[m
+ .../assets/examples/seedlist.txt |     8 [32m+[m
+ .../seedcracker/assets/icon.png  |   Bin [31m0[m -> [32m12092[m bytes
+ .../assets/lang/en_us.json       |    95 [32m+[m
+ .../assets/lang/es_es.json       |    21 [32m+[m
+ .../assets/lang/hi_in.json       |    92 [32m+[m
+ .../assets/lang/ru_ru.json       |    93 [32m+[m
+ .../assets/lang/tr_tr.json       |    93 [32m+[m
+ .../assets/lang/zh_cn.json       |    93 [32m+[m
+ .../assets/tables/btree18.h      |  2163 [32m+[m
+ .../assets/tables/btree19.h      |  2342 [32m+[m
+ .../assets/tables/btree192.h     |  2166 [32m+[m
+ .../assets/tables/btree20.h      |  2342 [32m+[m
+ .../assets/tables/btree21wd.h    |  2342 [32m+[m
+ VkYakeeMods/seedcracker/build.rs |    19 [32m+[m
+ .../c_src/cubiomes/biomenoise.c  |  1975 [32m+[m
+ .../c_src/cubiomes/biomenoise.h  |   316 [32m+[m
+ .../c_src/cubiomes/biomes.c      |   455 [32m+[m
+ .../c_src/cubiomes/biomes.h      |   205 [32m+[m
+ .../c_src/cubiomes/finders.c     |  5619 [32m++[m
+ .../c_src/cubiomes/finders.h     |   842 [32m+[m
+ .../c_src/cubiomes/generator.c   |   773 [32m+[m
+ .../c_src/cubiomes/generator.h   |   144 [32m+[m
+ .../c_src/cubiomes/layers.c      |  2184 [32m+[m
+ .../c_src/cubiomes/layers.h      |   192 [32m+[m
+ .../c_src/cubiomes/libcubiomes.a |   Bin [31m0[m -> [32m660148[m bytes
+ .../c_src/cubiomes/noise.c       |   573 [32m+[m
+ .../c_src/cubiomes/noise.h       |    88 [32m+[m
+ .../c_src/cubiomes/quadbase.c    |   674 [32m+[m
+ .../c_src/cubiomes/quadbase.h    |   523 [32m+[m
+ .../c_src/cubiomes/rng.h         |   406 [32m+[m
+ .../c_src/cubiomes/size_check.c  |     3 [32m+[m
+ .../cubiomes/tables/btree18.h    |  2163 [32m+[m
+ .../cubiomes/tables/btree19.h    |  2342 [32m+[m
+ .../cubiomes/tables/btree192.h   |  2166 [32m+[m
+ .../cubiomes/tables/btree20.h    |  2342 [32m+[m
+ .../cubiomes/tables/btree21wd.h  |  2342 [32m+[m
+ .../c_src/cubiomes/tests.c       |   544 [32m+[m
+ .../c_src/cubiomes/util.c        |   584 [32m+[m
+ .../c_src/cubiomes/util.h        |    61 [32m+[m
+ .../src/assets_manager.rs        |    98 [32m+[m
+ .../src/bedrock/block.rs         |    34 [32m+[m
+ .../src/bedrock/filter.rs        |   130 [32m+[m
+ .../src/bedrock/layer.rs         |   186 [32m+[m
+ .../src/bedrock/mod.rs           |     9 [32m+[m
+ .../src/bedrock/solver.rs        |   209 [32m+[m
+ .../src/biomes/cubiomes.rs       |    86 [32m+[m
+ .../src/biomes/lifting.rs        |    66 [32m+[m
+ .../src/biomes/mod.rs            |     8 [32m+[m
+ .../src/decorators/mod.rs        |   127 [32m+[m
+ .../src/dungeon/floor.rs         |    54 [32m+[m
+ .../src/dungeon/mod.rs           |     5 [32m+[m
+ .../src/dungeon/solver.rs        |    94 [32m+[m
+ .../seedcracker/src/ffi.rs       |   202 [32m+[m
+ .../seedcracker/src/lib.rs       |    29 [32m+[m
+ .../seedcracker/src/main.rs      |   308 [32m+[m
+ .../src/math/chunk_rand.rs       |    60 [32m+[m
+ .../src/math/hashed_seed.rs      |    48 [32m+[m
+ .../src/math/lattice.rs          |   282 [32m+[m
+ .../seedcracker/src/math/lcg.rs  |   135 [32m+[m
+ .../seedcracker/src/math/mod.rs  |    11 [32m+[m
+ .../src/math/xoroshiro.rs        |    71 [32m+[m
+ .../src/pillars/mod.rs           |    91 [32m+[m
+ .../src/structures/finder.rs     |   174 [32m+[m
+ .../src/structures/lifting.rs    |    98 [32m+[m
+ .../src/structures/mod.rs        |   171 [32m+[m
+ .../src/structures/treasure.rs   |   117 [32m+[m
+ .../src/timemachine/mod.rs       |   188 [32m+[m
+ .../seedcracker/src/trees/mod.rs |    98 [32m+[m
+ VkYakeeMods/src/api.rs           |    77 [32m+[m
+ .../src/horizonmatica_adapter.rs |  1386 [32m+[m
+ VkYakeeMods/src/lib.rs           |   255 [32m+[m
+ .../src/seedcracker_adapter.rs   |   413 [32m+[m
+ VkYakeeMods/src/storage.rs       |   607 [32m+[m
+ VkYakeeMods/src/verifier.rs      |   248 [32m+[m
+ VkYakeeMods/src/vkmap_adapter.rs |   881 [32m+[m
+ .../src/vlakee_ui_adapter.rs     |  1052 [32m+[m
+ .../tests/integration_test.rs    |   882 [32m+[m
+ crates/horizon-client/Cargo.toml |     1 [32m+[m
+ .../src/game/native_hooks.rs     |    98 [32m+[m[31m-[m
+ .../src/game/remote.rs           |     1 [32m+[m
+ .../src/game/remote_chunks.rs    |   112 [32m+[m
+ 745 files changed, 121777 insertions(+), 5 deletions(-)

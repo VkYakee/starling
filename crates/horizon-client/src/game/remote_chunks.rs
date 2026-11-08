@@ -284,6 +284,118 @@ impl Game<'_> {
         let (x, z) = (p.x, p.z);
         let replaced_column = self.world.chunks.contains_key(&(x, z));
         self.streaming.insert_remote(&mut self.world, chunk);
+        {
+            let target_y = if self.dim.id().contains("nether") { 123 } else { 0 };
+            let mut bedrock_mask = [0u8; 256];
+            let mut found_bedrock = false;
+            for bz in 0..16 {
+                for bx in 0..16 {
+                    let state = self.world.block(x * 16 + bx, target_y, z * 16 + bz);
+                    if self.res.facts().get(state).name == "minecraft:bedrock" {
+                        bedrock_mask[((bz << 4) | bx) as usize] = 1;
+                        found_bedrock = true;
+                    }
+                }
+            }
+            vkyakee_mods::on_chunk_loaded(
+                x,
+                z,
+                self.dim.id(),
+                if found_bedrock { Some(&bedrock_mask) } else { None },
+            );
+
+            // Subterranean & Surface Structure Scanners (SeedCrackerX parity)
+            let is_nether = self.dim.id().contains("nether");
+            let is_end = self.dim.id().contains("end");
+
+            if !is_nether && !is_end {
+                // 1. Buried Treasure: Chest at local column (9, 9)
+                for y in 45..=90 {
+                    let st = self.world.block(x * 16 + 9, y, z * 16 + 9);
+                    if self.res.facts().get(st).name == "minecraft:chest" {
+                        vkyakee_mods::on_structure_found("minecraft:buried_treasure", x, z);
+                        break;
+                    }
+                }
+
+                // 2. Trial Chambers: Subterranean vaults / copper bulbs / tuff in deep layers y in [-45, 0]
+                let mut found_trial = false;
+                for y in (-40..0).step_by(5) {
+                    for bz in [4, 8, 12] {
+                        for bx in [4, 8, 12] {
+                            let st = self.world.block(x * 16 + bx, y, z * 16 + bz);
+                            let name = self.res.facts().get(st).name.as_str();
+                            if name == "minecraft:vault"
+                                || name == "minecraft:copper_bulb"
+                                || name == "minecraft:waxed_copper_bulb"
+                                || name == "minecraft:trial_spawner"
+                            {
+                                vkyakee_mods::on_structure_found("minecraft:trial_chambers", x, z);
+                                found_trial = true;
+                                break;
+                            }
+                        }
+                        if found_trial { break; }
+                    }
+                    if found_trial { break; }
+                }
+
+                // 3. Ancient City: Deepslate levels y in [-50, -15]
+                let mut found_ancient = false;
+                for y in (-45..-15).step_by(6) {
+                    for bz in [4, 11] {
+                        for bx in [4, 11] {
+                            let st = self.world.block(x * 16 + bx, y, z * 16 + bz);
+                            let name = self.res.facts().get(st).name.as_str();
+                            if name == "minecraft:reinforced_deepslate" || name == "minecraft:sculk_shrieker" {
+                                vkyakee_mods::on_structure_found("minecraft:ancient_city", x, z);
+                                found_ancient = true;
+                                break;
+                            }
+                        }
+                        if found_ancient { break; }
+                    }
+                    if found_ancient { break; }
+                }
+
+                // 4. Desert Pyramid: Check y in [55, 75]
+                for y in (55..75).step_by(3) {
+                    let st = self.world.block(x * 16 + 8, y, z * 16 + 8);
+                    let name = self.res.facts().get(st).name.as_str();
+                    if name == "minecraft:tnt" || name == "minecraft:chiseled_sandstone" {
+                        vkyakee_mods::on_structure_found("minecraft:desert_pyramid", x, z);
+                        break;
+                    }
+                }
+
+                // 5. Swamp Hut: Cauldron + Crafting table
+                for y in 60..72 {
+                    let st = self.world.block(x * 16 + 7, y, z * 16 + 7);
+                    if self.res.facts().get(st).name == "minecraft:cauldron" {
+                        vkyakee_mods::on_structure_found("minecraft:swamp_hut", x, z);
+                        break;
+                    }
+                }
+            } else if is_nether {
+                // Nether Fortress: Nether bricks
+                for y in (45..75).step_by(4) {
+                    let st = self.world.block(x * 16 + 8, y, z * 16 + 8);
+                    if self.res.facts().get(st).name == "minecraft:nether_bricks" {
+                        vkyakee_mods::on_structure_found("minecraft:fortress", x, z);
+                        break;
+                    }
+                }
+            } else if is_end {
+                // End City: Purpur block
+                for y in (50..85).step_by(5) {
+                    let st = self.world.block(x * 16 + 8, y, z * 16 + 8);
+                    if self.res.facts().get(st).name == "minecraft:purpur_block" {
+                        vkyakee_mods::on_structure_found("minecraft:end_city", x, z);
+                        break;
+                    }
+                }
+            }
+        }
         if replaced_column {
             self.world
                 .block_entities

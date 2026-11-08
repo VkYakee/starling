@@ -1,0 +1,17 @@
+[package]
+name = "vkmap"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+authors = ["VkYakee"]
+description = "VkMap: Native Touch-Optimized Minecraft Map, Radar & Structure Engine for Starling Android"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+png = "0.18.1"
+byteorder = "1.5.0"
+flate2 = "1.1.11"
+log = "0.4"
+
+[dev-dependencies]
