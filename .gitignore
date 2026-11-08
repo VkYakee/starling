@@ -51,11 +51,16 @@
 # Release-only compiled original exporter bundle.
 /exporters/
 
-/horizon-keypad.json
-/horizon-keypad.json.tmp
-
 # Local artwork workspace and original reference images.
 /art/
 
 # Local PR description draft.
 /PR_DESCRIPTION.txt
+
+/horizon-keypad.json
+/horizon-keypad.json.tmp
+
+# Reference clones of Java mods (not Git submodules; keep local, don't track).
+/HorizonVoxelCracker/VoxelMap/
+/HorizonVoxelCracker/seedcrackerX/
+/litematica/
