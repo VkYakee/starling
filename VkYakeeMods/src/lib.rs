@@ -76,6 +76,21 @@ impl VkModHub {
     }
 }
 
+/// Shared floating-button/menu state consumed by Starling's HUD renderer.
+static MOD_MENU: OnceLock<Mutex<ModMenuState>> = OnceLock::new();
+
+pub fn mod_menu_state() -> &'static Mutex<ModMenuState> {
+    MOD_MENU.get_or_init(|| Mutex::new(ModMenuState::default()))
+}
+
+pub fn toggle_mod_menu() {
+    if let Ok(mut state) = mod_menu_state().lock() { state.toggle(); }
+}
+
+pub fn dispatch_mod_menu_action(action: MenuAction) {
+    if let Ok(mut state) = mod_menu_state().lock() { state.dispatch(action); }
+}
+
 static MOD_HUB: OnceLock<Mutex<VkModHub>> = OnceLock::new();
 
 pub fn hub() -> &'static Mutex<VkModHub> {
