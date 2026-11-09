@@ -102,8 +102,13 @@ impl Game<'_> {
                         vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::Back);
                         return true;
                     }
-                    if point[1] >= my + 39.0 && point[1] <= my + 147.0 {
-                        let index=((point[1]-(my+39.0))/12.0) as usize;
+                    if point[1] >= my + 150.0 && point[1] <= my + 170.0 {
+                        vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::NextFinderPage);
+                        return true;
+                    }
+                    if point[1] >= my + 39.0 && point[1] <= my + 149.0 {
+                        let row=((point[1]-(my+39.0))/11.0) as usize;
+                        let index=menu.finder_page as usize * 10 + row;
                         let sc=vkyakee_mods::seedcracker_hud_snapshot();
                         if let Some((name,enabled))=sc.finders.get(index) {
                             vkyakee_mods::seedcracker_hud_action(&format!("sc finder {} {}",name,if *enabled {"off"} else {"on"}));
