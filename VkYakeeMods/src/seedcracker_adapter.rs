@@ -275,7 +275,7 @@ impl SeedCrackerMod {
         if self.collecting && !updates.is_empty() {self.on_block_snapshot(&updates);}
     }
     /// Rebuild detector caches when dimension, version, or collection settings change.
-    pub fn reload_finders(&mut self) { self.finder_pipeline.reload_finders(); self.seen_chunks.clear(); self.seen_biomes.clear(); self.seen_structures.clear(); }
+    pub fn reload_finders(&mut self) { self.finder_pipeline.reload_finders(); let _=self.finder_control_tx.send(FinderWorkerCommand::Reload); self.seen_chunks.clear(); self.seen_biomes.clear(); self.seen_structures.clear(); }
     pub fn reset(&mut self) {
         self.reset_all();
     }
