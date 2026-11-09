@@ -4,6 +4,7 @@ pub mod biomes;
 pub mod decorators;
 pub mod dungeon;
 pub mod ffi;
+pub mod finders;
 pub mod math;
 pub mod pillars;
 pub mod structures;
