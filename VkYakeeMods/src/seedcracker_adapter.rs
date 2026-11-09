@@ -371,6 +371,18 @@ impl VkMod for SeedCrackerMod {
         }
     }
 
+    fn on_block_snapshot(&mut self, chunk_x:i32, chunk_z:i32, dimension:&str, blocks:&[(i32,i32,i32,String)]) {
+        let _=(chunk_x,chunk_z,dimension);
+        let observations:Vec<BlockObservation>=blocks.iter().map(|(x,y,z,name)|BlockObservation::new(*x,*y,*z,name.clone())).collect();
+        self.on_block_snapshot(&observations);
+    }
+
+    fn on_block_update(&mut self, x:i32, y:i32, z:i32, block:Option<&str>) {
+        let updates=block.map(|name|vec![BlockObservation::new(x,y,z,name)]).unwrap_or_default();
+        let removed=if block.is_none(){vec![(x,y,z)]}else{Vec::new()};
+        self.on_block_updates(updates,removed);
+    }
+
     fn on_biome_found(&mut self, x: i32, z: i32, biome_id: i32, name: &str) {
         self.record_biome(x, z, biome_id, name);
     }
