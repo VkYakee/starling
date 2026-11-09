@@ -52,7 +52,7 @@ pub struct SeedCrackerMod {
     toasts: VecDeque<ToastLog>,
     seen_chunks: HashSet<(String, i32, i32)>,
     solve_tx: Sender<(u64, CrackerState)>,
-    solve_rx: Receiver<(u64, Vec<i64>)>,
+    solve_rx: std::sync::Mutex<Receiver<(u64, Vec<i64>)>>,
     solving: bool,
     solve_requested: bool,
     solver_generation: u64,
@@ -62,7 +62,7 @@ pub struct SeedCrackerMod {
     finder_pipeline: FinderPipeline,
     finder_control_tx: Sender<FinderWorkerCommand>,
     block_scan_tx: mpsc::SyncSender<(i32,i32,String,Vec<BlockObservation>)>,
-    block_scan_rx: Receiver<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>,
+    block_scan_rx: std::sync::Mutex<Receiver<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>>,
 }
 
 enum FinderWorkerCommand {
@@ -91,7 +91,7 @@ impl SeedCrackerMod {
                         FinderWorkerCommand::Updates(batch)=>pipeline.apply_block_updates(batch),
                         FinderWorkerCommand::Reload=>pipeline.reload_finders(),
                         FinderWorkerCommand::SetEnabled(kind,enabled)=>pipeline.set_finder_enabled(kind,enabled),
-                        FinderWorkerCommand::Pause=>pipeline.pause(),
+                        FinderWorkerCommand::Pause=>{pipeline.pause();},
                         FinderWorkerCommand::Resume=>pipeline.resume(),
                     }
                 }
@@ -144,7 +144,7 @@ impl SeedCrackerMod {
             toasts: VecDeque::new(),
             seen_chunks: HashSet::new(),
             solve_tx,
-            solve_rx,
+            solve_rx: std::sync::Mutex::new(solve_rx),
             solving: false,
             solve_requested: false,
             solver_generation: 0,
@@ -152,8 +152,9 @@ impl SeedCrackerMod {
             seen_structures: HashSet::new(),
             seen_treasures: HashSet::new(),
             finder_pipeline: FinderPipeline::default(),
+            finder_control_tx,
             block_scan_tx,
-            block_scan_rx,
+            block_scan_rx: std::sync::Mutex::new(block_scan_rx),
         }
     }
 
@@ -287,7 +288,7 @@ impl SeedCrackerMod {
         let batch=BlockUpdateBatch{updates:updates.clone(),removed};
         self.finder_pipeline.apply_block_updates(batch.clone());
         let _=self.finder_control_tx.send(FinderWorkerCommand::Updates(batch));
-        if self.collecting && !updates.is_empty() {self.on_block_snapshot(&updates);}
+        if self.collecting && !updates.is_empty() { let cx=updates[0].x.div_euclid(16); let cz=updates[0].z.div_euclid(16); let _=self.block_scan_tx.try_send((cx,cz,String::from("unknown"),updates)); }
     }
     /// Rebuild detector caches when dimension, version, or collection settings change.
     pub fn reload_finders(&mut self) { self.finder_pipeline.reload_finders(); let _=self.finder_control_tx.send(FinderWorkerCommand::Reload); self.seen_chunks.clear(); self.seen_biomes.clear(); self.seen_structures.clear(); }
@@ -364,7 +365,7 @@ impl SeedCrackerMod {
     }
 
     fn poll_solver(&mut self) {
-        while let Ok((generation, candidates)) = self.solve_rx.try_recv() {
+        while let Ok((generation, candidates)) = self.solve_rx.lock().unwrap_or_else(|e|e.into_inner()).try_recv() {
             // Ignore results from a reset or a superseded solve request.
             if generation != self.solver_generation {
                 continue;
@@ -418,7 +419,7 @@ impl VkMod for SeedCrackerMod {
     }
 
     fn on_tick(&mut self) {
-        while let Ok((_cx,_cz,_dimension,blocks,output))=self.block_scan_rx.try_recv() {
+        while let Ok((_cx,_cz,_dimension,blocks,output))=self.block_scan_rx.lock().unwrap_or_else(|e|e.into_inner()).try_recv() {
             self.process_block_snapshot(&blocks,output);
         }
         self.poll_finders();
