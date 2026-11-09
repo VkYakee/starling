@@ -167,7 +167,7 @@ impl SeedCrackerMod {
             "village"=>Some(seedcracker::FinderType::Village),"shipwreck"=>Some(seedcracker::FinderType::Shipwreck),
             "ocean_monument"|"monument"=>Some(seedcracker::FinderType::Monument),
             "pillager_outpost"|"outpost"=>Some(seedcracker::FinderType::Outpost),
-            "end_city"=>Some(seedcracker::FinderType::EndCity),"trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),_=>None};
+            "end_city"=>Some(seedcracker::FinderType::EndCity),"trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),"ancient_city"=>Some(seedcracker::FinderType::AncientCity),_=>None};
         if finder_type.is_some_and(|kind|!self.finder_pipeline.finder_enabled(kind)){return;}
         let key=(normalized.clone(),chunk_x,chunk_z);
         if !self.seen_structures.insert(key){return;}
@@ -475,7 +475,7 @@ impl VkMod for SeedCrackerMod {
                             "igloo"=>Some(seedcracker::FinderType::Igloo),"village"=>Some(seedcracker::FinderType::Village),"biome"=>Some(seedcracker::FinderType::Biome),
                             "shipwreck"=>Some(seedcracker::FinderType::Shipwreck),"monument"=>Some(seedcracker::FinderType::Monument),
                             "outpost"=>Some(seedcracker::FinderType::Outpost),"end_city"=>Some(seedcracker::FinderType::EndCity),
-                            "trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),"end_pillars"=>Some(seedcracker::FinderType::EndPillars),
+                            "trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),"ancient_city"=>Some(seedcracker::FinderType::AncientCity),"end_pillars"=>Some(seedcracker::FinderType::EndPillars),
                             "end_gateway"=>Some(seedcracker::FinderType::EndGateway),"dungeon"=>Some(seedcracker::FinderType::Dungeon),
                             "emerald_ore"=>Some(seedcracker::FinderType::EmeraldOre),"desert_well"=>Some(seedcracker::FinderType::DesertWell),
                             "warped_fungus"=>Some(seedcracker::FinderType::WarpedFungus),_=>None};
