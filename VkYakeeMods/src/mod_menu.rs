@@ -21,6 +21,7 @@
      #[default]
      Home,
      SeedCracker,
+     SeedFinders,
  }
 
  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -30,6 +31,7 @@
      Back,
      ToggleHud,
      OpenFinders,
+     NextFinderPage,
  }
 
  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -81,6 +83,7 @@
      pub page: MenuPage,
      pub opacity: u8,
      pub scale_percent: u16,
+     pub finder_page: u8,
  }
 
  impl Default for ModMenuState {
@@ -91,6 +94,7 @@
              page: MenuPage::Home,
              opacity: 218,
              scale_percent: 100,
+             finder_page: 0,
          }
      }
  }
@@ -150,3 +154,11 @@
          assert!(!state.visible);
      }
  }
+
+/// Theme contracts used by Starling's floating-button and menu renderer.
+#[derive(Debug, Clone, Copy)]
+pub struct FloatingButtonTheme { pub background: [u8;4], pub foreground: [u8;4], pub border: [u8;4] }
+impl Default for FloatingButtonTheme { fn default()->Self { Self { background: palette::PANEL, foreground: palette::GREEN, border: palette::BORDER } } }
+#[derive(Debug, Clone, Copy)]
+pub struct MenuTheme { pub panel: [u8;4], pub text: [u8;4], pub muted: [u8;4], pub accent: [u8;4], pub border: [u8;4] }
+impl Default for MenuTheme { fn default()->Self { Self { panel: palette::PANEL, text: palette::TEXT, muted: palette::MUTED, accent: palette::GREEN, border: palette::BORDER } } }
