@@ -61,7 +61,7 @@ impl PatternDetector {
   let mut out=FinderObservations::default(); let map:HashMap<(i32,i32,i32),&str>=blocks.iter().map(|b|((b.x,b.y,b.z),b.block.as_str())).collect();
   let has=|x:i32,y:i32,z:i32,name:&str|map.get(&(x,y,z)).is_some_and(|v|v.eq_ignore_ascii_case(name)||v.rsplit(':').next().is_some_and(|tail|tail.eq_ignore_ascii_case(name)));
   for b in blocks {
-   let key=(b.x,b.y,b.z,b.block.clone()); if !self.known.insert(key){continue}
+   let key=(b.x,b.y,b.z,b.block.clone()); self.known.insert(key);
    let n=b.block.rsplit(':').next().unwrap_or(&b.block).to_ascii_lowercase();
    if n.contains("emerald_ore"){out.patterns.push(PatternHit{kind:PatternKind::EmeraldOre,x:b.x,y:b.y,z:b.z});}
    if n=="spawner" || n.ends_with(":spawner") {
