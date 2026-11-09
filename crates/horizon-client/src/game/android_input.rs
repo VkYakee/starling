@@ -91,7 +91,7 @@ impl Game<'_> {
             let menu = vkyakee_mods::mod_menu_state().lock().unwrap_or_else(|e| e.into_inner()).clone();
             if menu.open {
                 let mx = (bx - 194.0).max(4.0);
-                let my = (by - 28.0).clamp(4.0, (h - 154.0).max(4.0));
+                let my = (by - 28.0).clamp(4.0, (h - 178.0).max(4.0));
                 if menu.page == vkyakee_mods::MenuPage::Home {
                     if point[0] >= mx + 8.0 && point[0] <= mx + 176.0 && point[1] >= my + 51.0 && point[1] <= my + 82.0 {
                         vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::OpenSeedCracker);
@@ -107,6 +107,14 @@ impl Game<'_> {
                             vkyakee_mods::seedcracker_hud_action("sc solve");
                         } else if point[0] >= mx + 94.0 && point[0] <= mx + 174.0 {
                             vkyakee_mods::seedcracker_hud_action("sc reset_all");
+                        }
+                        return true;
+                    }
+                    if point[1] >= my + 141.0 && point[1] <= my + 169.0 {
+                        if point[0] >= mx + 8.0 && point[0] <= mx + 88.0 {
+                            vkyakee_mods::seedcracker_hud_action("sc esp");
+                        } else if point[0] >= mx + 94.0 && point[0] <= mx + 174.0 {
+                            vkyakee_mods::seedcracker_hud_action("sc finder reload");
                         }
                         return true;
                     }
