@@ -14,7 +14,7 @@ pub use verifier::SeedVerifier;
 pub use vkmap_adapter::VkMapMod;
 pub use vlakee_ui_adapter::VlakeeUIMod;
 
-use std::sync::{Mutex, OnceLock};
+use std::sync::{Mutex, OnceLock};\nuse std::collections::VecDeque;\n\n#[derive(Clone)]\nstruct ChunkEvent { cx:i32, cz:i32, dimension:String, mask:Option<[u8;256]> }\nstatic CHUNK_EVENTS: OnceLock<Mutex<VecDeque<ChunkEvent>>> = OnceLock::new();\nfn chunk_events()->&'static Mutex<VecDeque<ChunkEvent>> { CHUNK_EVENTS.get_or_init(||Mutex::new(VecDeque::new())) }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HudTab {
