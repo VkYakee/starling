@@ -66,7 +66,7 @@ impl PatternDetector {
  }
  pub fn apply_updates(&mut self,batch:BlockUpdateBatch) {
   for (x,y,z) in batch.removed {self.known.retain(|(bx,by,bz,_)|(*bx,*by,*bz)!=(x,y,z));}
-  for b in batch.updates {self.known.retain(|(x,y,z,_)|(*x,*y,*z)!=(b.x,b.y,b.z));self.known.insert((b.x,b.y,b.z,b.block));}
+  for b in batch.updates {self.known.retain(|(x,y,z,_)|(*x,*y,*z)!=(b.x,b.y,b.z));}
  }
  pub fn reset(&mut self){self.known.clear();}
 }
