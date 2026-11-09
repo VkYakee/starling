@@ -6,6 +6,7 @@ use crate::api::{ModMetadata, VkMod};
 use crate::storage::{DiscoveredBiome, DiscoveredStructure, StorageManager, WorldSessionData};
 use crate::verifier::SeedVerifier;
 use seedcracker::bedrock::{BedrockBlock, BlockType, HierarchicalBedrockCracker};
+use seedcracker::finders::{FinderPipeline, FinderKind};
 use seedcracker::math::hashed_seed::HashedSeed;
 use seedcracker::structures::TreasureDatabase;
 use seedcracker::timemachine::{CrackerState, TimeMachine};
@@ -43,6 +44,7 @@ pub struct SeedCrackerMod {
     solver_generation: u64,
     seen_biomes: HashSet<(i32, i32)>,
     seen_structures: HashSet<(i32, i32)>,
+    finder_pipeline: FinderPipeline,
 }
 
 impl SeedCrackerMod {
@@ -102,6 +104,7 @@ impl SeedCrackerMod {
             solver_generation: 0,
             seen_biomes: HashSet::new(),
             seen_structures: HashSet::new(),
+            finder_pipeline: FinderPipeline::default(),
         }
     }
 
@@ -120,6 +123,7 @@ impl SeedCrackerMod {
 
     pub fn toggle_collection(&mut self) {
         self.collecting = !self.collecting;
+        if self.collecting { self.finder_pipeline.resume(); } else { self.finder_pipeline.pause(); }
         if self.collecting {
             self.add_toast("▶ Recopilacion de datos ACTIVADA", 0x00FF88);
             self.status_message = "Recopilacion activa...".to_string();
@@ -178,6 +182,8 @@ impl SeedCrackerMod {
 
     /// Hard Reset: Clears memory, verifier state, cache, and wipes saved session progress.
     pub fn reset_all(&mut self) {
+        self.finder_pipeline.stop();
+        self.finder_pipeline = FinderPipeline::default();
         self.state = CrackerState::new();
         self.verifier = SeedVerifier::new();
         self.cracked_seed = None;
@@ -225,6 +231,21 @@ impl SeedCrackerMod {
             .is_ok();
     }
 
+    fn poll_finders(&mut self) {
+        // Drain a bounded amount per tick to keep the game thread responsive.
+        for _ in 0..4 {
+            let Some((_sequence, output)) = self.finder_pipeline.run_one() else { break; };
+            for block in output.bedrock {
+                if !self.state.bedrock_blocks.iter().any(|b| b.x==block.x && b.y==block.y && b.z==block.z) {
+                    self.state.bedrock_blocks.push(block);
+                }
+            }
+            for structure in output.structures {
+                self.state.structures.push(structure);
+            }
+        }
+    }
+
     fn poll_solver(&mut self) {
         while let Ok((generation, candidates)) = self.solve_rx.try_recv() {
             // Ignore results from a reset or a superseded solve request.
@@ -269,6 +290,7 @@ impl VkMod for SeedCrackerMod {
         }
         log::info!("SeedCracker: Interceptado Hashed Seed = 0x{:016X}", hashed_seed);
         self.state.hashed_seed = Some(hashed_seed as i64);
+        self.finder_pipeline.resume();
         self.session.hashed_seed = Some(hashed_seed);
         let _ = self.storage.save(&self.session);
 
@@ -276,7 +298,7 @@ impl VkMod for SeedCrackerMod {
         self.status_message = format!("Hashed Seed: 0x{:016X}", hashed_seed);
     }
 
-    fn on_tick(&mut self) { self.poll_solver(); }
+    fn on_tick(&mut self) { self.poll_finders(); self.poll_solver(); }
 
     fn on_chunk_loaded(
         &mut self,
@@ -298,6 +320,7 @@ impl VkMod for SeedCrackerMod {
             let base_y = if is_nether { 123 } else { 0 };
 
             let mut count = 0;
+            let mut observed_bedrock = Vec::new();
             for z in 0..16 {
                 for x in 0..16 {
                     let idx = (z << 4) | x;
@@ -305,12 +328,13 @@ impl VkMod for SeedCrackerMod {
                         count += 1;
                         let bx = (cx << 4) + x as i32;
                         let bz = (cz << 4) + z as i32;
-                        self.state.bedrock_blocks.push(BedrockBlock::new(bx, base_y, bz, BlockType::Bedrock));
+                        observed_bedrock.push(BedrockBlock::new(bx, base_y, bz, BlockType::Bedrock));
                     }
                 }
             }
 
             if count > 0 {
+                let _ = self.finder_pipeline.enqueue_chunk(FinderKind::Combined, dimension, cx, cz, observed_bedrock);
                 let hex_mask: String = mask.iter().map(|b| if *b != 0 { '1' } else { '0' }).collect();
                 self.session.bedrock_chunks.insert(format!("{},{}", cx, cz), hex_mask);
                 let _ = self.storage.save(&self.session);
