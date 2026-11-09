@@ -32,11 +32,11 @@ pub struct PatternDetector { known:HashSet<(i32,i32,i32,String)> }
 impl PatternDetector {
  pub fn scan(&mut self, blocks:&[BlockObservation])->FinderObservations {
   let mut out=FinderObservations::default(); let map:HashMap<(i32,i32,i32),&str>=blocks.iter().map(|b|((b.x,b.y,b.z),b.block.as_str())).collect();
-  let has=|x:i32,y:i32,z:i32,name:&str|map.get(&(x,y,z)).is_some_and(|v|v.eq_ignore_ascii_case(name));
+  let has=|x:i32,y:i32,z:i32,name:&str|map.get(&(x,y,z)).is_some_and(|v|v.eq_ignore_ascii_case(name)||v.rsplit(':').next().is_some_and(|tail|tail.eq_ignore_ascii_case(name)));
   for b in blocks {
    let key=(b.x,b.y,b.z,b.block.clone()); if !self.known.insert(key){continue}
    let n=b.block.to_ascii_lowercase();
-   if n.contains("emerald_ore"){out.patterns.push(PatternHit{kind:PatternKind::EmeraldOre,x:b.x,y:b.y,z:b.z});out.patterns.push(PatternHit{kind:PatternKind::EmeraldOre,x:b.x,y:b.y,z:b.z});}
+   if n.contains("emerald_ore"){out.patterns.push(PatternHit{kind:PatternKind::EmeraldOre,x:b.x,y:b.y,z:b.z});}
    if n=="spawner" || n.ends_with(":spawner") {
     let mut floor=0; for dx in -4..=4 {for dz in -4..=4 {if (-4..=4).contains(&dx)&&(-4..=4).contains(&dz) {let f=map.get(&(b.x+dx,b.y-1,b.z+dz)).copied().unwrap_or("");if f.contains("cobblestone")||f.contains("mossy_cobblestone"){floor+=1}}}}
     if floor>=20 {out.patterns.push(PatternHit{kind:PatternKind::Dungeon,x:b.x,y:b.y,z:b.z});}
@@ -53,6 +53,14 @@ impl PatternDetector {
    if n=="bedrock" && b.y>=76 && b.y<=106 {out.patterns.push(PatternHit{kind:PatternKind::EndPillar,x:b.x,y:b.y,z:b.z});}
    // Desert-well signature: center water and sandstone rim.
    if n=="water" && has(b.x-1,b.y,b.z,"sandstone")&&has(b.x+1,b.y,b.z,"sandstone")&&has(b.x,b.y,b.z-1,"sandstone")&&has(b.x,b.y,b.z+1,"sandstone") {out.patterns.push(PatternHit{kind:PatternKind::DesertWell,x:b.x,y:b.y,z:b.z});}
+  }
+  // Per-chunk palette signatures for SeedCrackerX structure families.
+  let mut palettes:HashMap<(i32,i32),HashMap<String,usize>>=HashMap::new();
+  for b in blocks { let key=b.chunk();let name=b.block.rsplit(':').next().unwrap_or(&b.block).to_ascii_lowercase();*palettes.entry(key).or_default().entry(name).or_default()+=1; }
+  for ((cx,cz),p) in palettes {
+   let count=|needle:&str|p.iter().filter(|(name,_)|name.contains(needle)).map(|(_,n)|*n).sum::<usize>();
+   let signature=[(PatternKind::DesertPyramid,"orange_terracotta",20),(PatternKind::JungleTemple,"mossy_cobblestone",20),(PatternKind::SwampHut,"oak_planks",12),(PatternKind::Igloo,"snow_block",12),(PatternKind::Village,"hay_block",8),(PatternKind::Shipwreck,"oak_planks",15),(PatternKind::Monument,"prismarine",40),(PatternKind::Outpost,"dark_oak_planks",12),(PatternKind::EndCity,"purpur",20),(PatternKind::TrialChambers,"tuff",40),(PatternKind::AncientCity,"sculk",20)];
+   for (kind,block,min) in signature {if count(block)>=min {out.patterns.push(PatternHit{kind,x:cx*16+8,y:0,z:cz*16+8});}}
   }
   out.blocks=blocks.to_vec();out
  }
