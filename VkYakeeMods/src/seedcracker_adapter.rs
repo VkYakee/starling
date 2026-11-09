@@ -6,7 +6,7 @@ use crate::api::{ModMetadata, VkMod};
 use crate::storage::{DiscoveredBiome, DiscoveredStructure, StorageManager, WorldSessionData};
 use crate::verifier::SeedVerifier;
 use seedcracker::bedrock::{BedrockBlock, BlockType, HierarchicalBedrockCracker};
-use seedcracker::finders::{FinderPipeline, FinderKind};
+use seedcracker::finders::{FinderPipeline, FinderKind, BlockObservation, BlockUpdateBatch, PatternKind};
 use seedcracker::math::hashed_seed::HashedSeed;
 use seedcracker::structures::TreasureDatabase;
 use seedcracker::timemachine::{CrackerState, TimeMachine};
@@ -43,7 +43,7 @@ pub struct SeedCrackerMod {
     solving: bool,
     solver_generation: u64,
     seen_biomes: HashSet<(i32, i32)>,
-    seen_structures: HashSet<(i32, i32)>,
+    seen_structures: HashSet<(String, i32, i32)>,
     finder_pipeline: FinderPipeline,
 }
 
@@ -139,7 +139,7 @@ impl SeedCrackerMod {
             return;
         }
         let key = (x >> 6, z >> 6); // Agrupar por áreas de 64 bloques
-        if self.seen_biomes.insert(key) {
+        if self.seen_biomes.insert(key) {\n            self.state.biome_samples.push(seedcracker::biomes::BiomeSample::new(x, 0, z, biome_id));
             let msg = format!("🌿 Bioma: {} en [{}, {}]", name, x, z);
             self.add_toast(msg, 0x55FF55);
 
@@ -176,6 +176,29 @@ impl SeedCrackerMod {
         }
     }
 
+    /// Feeds decoded block palettes to the Rust finder engine (structures/decorators/pillars).
+    pub fn on_block_snapshot(&mut self, blocks: &[BlockObservation]) {
+        if !self.active || !self.collecting { return; }
+        let output=self.finder_pipeline.scan_blocks(blocks);
+        for s in output.structures { if !self.state.structures.iter().any(|v|v.structure_type==s.structure_type&&v.chunk_x==s.chunk_x&&v.chunk_z==s.chunk_z){self.state.structures.push(s);} }
+        for hit in output.observations.patterns {
+            match hit.kind {
+                PatternKind::EmeraldOre => self.state.emerald_ores.push(seedcracker::EmeraldOreData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.y,hit.z)),
+                PatternKind::DesertWell => self.state.desert_wells.push(seedcracker::DesertWellData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.z)),
+                PatternKind::EndPillar => {
+                    let angle=(hit.z as f64).atan2(hit.x as f64);
+                    let idx=(((angle+std::f64::consts::PI)/(2.0*std::f64::consts::PI))*10.0).round() as usize%10;
+                    if (76..=103).contains(&hit.y) { self.state.pillar_heights[idx]=Some(hit.y); }
+                }, _=>{}
+            }
+        }
+    }
+    /// Incremental world block mutation invalidates and replaces detector observations.
+    pub fn on_block_updates(&mut self, updates: Vec<BlockObservation>, removed: Vec<(i32,i32,i32)>) {
+        self.finder_pipeline.apply_block_updates(BlockUpdateBatch{updates,removed});
+    }
+    /// Rebuild detector caches when dimension, version, or collection settings change.
+    pub fn reload_finders(&mut self) { self.finder_pipeline.reset_finders(); self.seen_chunks.clear(); }
     pub fn reset(&mut self) {
         self.reset_all();
     }
