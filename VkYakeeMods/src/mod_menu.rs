@@ -29,6 +29,7 @@
      Close,
      Back,
      ToggleHud,
+     OpenFinders,
  }
 
  #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -111,6 +112,7 @@
              MenuAction::Close => self.open = false,
              MenuAction::Back => self.page = MenuPage::Home,
              MenuAction::ToggleHud => self.visible = !self.visible,
+             MenuAction::OpenFinders => { self.open = true; self.page = MenuPage::SeedFinders; },
          }
      }
 
