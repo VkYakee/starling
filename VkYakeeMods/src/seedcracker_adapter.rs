@@ -221,7 +221,7 @@ impl SeedCrackerMod {
                 }, _=>{}
             }
         }
-        if self.state.structures.len()>=2 || self.state.emerald_ores.len()>=2 || self.state.desert_wells.len()>=2 || self.state.dungeon_floors.len()>=1 || self.state.pillar_heights.iter().filter(|p|p.is_some()).count()>=3 { self.solve(); }
+        if !self.state.candidate_seeds.is_empty() || self.state.structures.len()>=2 || self.state.emerald_ores.len()>=2 || self.state.desert_wells.len()>=2 || self.state.dungeon_floors.len()>=1 || self.state.pillar_heights.iter().filter(|p|p.is_some()).count()>=3 { self.solve(); }
     }
     /// Incremental world block mutation invalidates and replaces detector observations.
     pub fn on_block_updates(&mut self, updates: Vec<BlockObservation>, removed: Vec<(i32,i32,i32)>) {
@@ -238,7 +238,8 @@ impl SeedCrackerMod {
                 self.state.pillar_heights[idx]=None;
             }
         }
-        self.finder_pipeline.apply_block_updates(BlockUpdateBatch{updates,removed});
+        self.finder_pipeline.apply_block_updates(BlockUpdateBatch{updates:updates.clone(),removed});
+        if self.collecting && !updates.is_empty() {self.on_block_snapshot(&updates);}
     }
     /// Rebuild detector caches when dimension, version, or collection settings change.
     pub fn reload_finders(&mut self) { self.finder_pipeline.reload_finders(); self.seen_chunks.clear(); self.seen_biomes.clear(); self.seen_structures.clear(); }
@@ -275,6 +276,7 @@ impl SeedCrackerMod {
     pub fn solve(&mut self) {
         if self.solving { self.solve_requested=true; return; }
         let has_bedrock = !self.state.bedrock_blocks.is_empty();
+        let has_treasure_candidates = !self.state.candidate_seeds.is_empty();
         let has_structures = !self.state.structures.is_empty();
         let has_pillars = self.state.pillar_heights.iter().any(Option::is_some);
         let has_other_observations = !self.state.dungeon_floors.is_empty()
@@ -282,7 +284,7 @@ impl SeedCrackerMod {
             || !self.state.emerald_ores.is_empty()
             || !self.state.desert_wells.is_empty()
             || !self.state.biome_samples.is_empty();
-        if !(has_bedrock || has_structures || has_pillars || has_other_observations) {
+        if !(has_bedrock || has_treasure_candidates || has_structures || has_pillars || has_other_observations) {
             return;
         }
 
