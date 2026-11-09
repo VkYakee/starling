@@ -106,8 +106,9 @@ impl TimeMachine {
 
         let mut structures: HashSet<StructureSeed48> = input.structure_candidates.iter().copied().collect();
         if input.structures.len() >= 2 {
-            structures.extend(StructureLifter::lift_structures(&input.structures)
-                .into_iter().map(StructureSeed48::new));
+            structures.extend(StructureLifter::lift_structures_range(
+                &input.structures, 0, 1_u64 << 29, cancel.as_ref(),
+            ).into_iter().map(StructureSeed48::new));
         }
         if cancelled() { out.cancelled = true; return out; }
 
