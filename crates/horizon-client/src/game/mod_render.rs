@@ -109,7 +109,7 @@ impl Game<'_> {
         batch.text(atlas, "VK", bx + 9.0, by + 13.0, rgba(242, 246, 244, 255), true);
         if !state.open { return; }
 
-        let (mw, mh) = (184.0, 150.0);
+        let (mw, mh) = (184.0, 174.0);
         let mx = (bx - mw - 10.0).max(4.0);
         let my = (by - 28.0).clamp(4.0, (h - mh - 4.0).max(4.0));
         batch.fill(atlas, mx + 2.0, my + 3.0, mw, mh, rgba(0, 0, 0, 115));
@@ -150,6 +150,10 @@ impl Game<'_> {
             batch.fill(atlas, mx + 94.0, my + 116.0, 80.0, 20.0, rgba(150, 30, 48, 210));
             batch.text(atlas, "SOLVE", mx + 28.0, my + 121.0, rgba(255, 255, 255, 255), true);
             batch.text(atlas, "RESET", mx + 116.0, my + 121.0, rgba(255, 255, 255, 255), true);
+            batch.fill(atlas, mx + 8.0, my + 143.0, 80.0, 20.0, rgba(18, 22, 24, 205));
+            batch.fill(atlas, mx + 94.0, my + 143.0, 80.0, 20.0, rgba(18, 22, 24, 205));
+            batch.text(atlas, "ESP TOGGLE", mx + 17.0, my + 148.0, rgba(52, 214, 112, 255), false);
+            batch.text(atlas, "FINDERS ↻", mx + 103.0, my + 148.0, rgba(244, 66, 82, 255), false);
         }
     }
 
