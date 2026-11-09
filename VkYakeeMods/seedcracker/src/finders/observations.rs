@@ -22,6 +22,33 @@ pub struct FinderObservations {
     pub structures: Vec<StructureInstance>,
     pub patterns: Vec<PatternHit>,
 }
+#[derive(Debug,Clone,Copy,PartialEq,Eq,Hash)]
+pub enum FinderCategory { Structures, Decorators, Biomes, Blocks }
+#[derive(Debug,Clone,Copy,PartialEq,Eq,Hash)]
+pub enum FinderType { BuriedTreasure,DesertPyramid,EndCity,JungleTemple,Monument,SwampHut,Shipwreck,Outpost,Igloo,Village,TrialChambers,EndPillars,EndGateway,Dungeon,EmeraldOre,DesertWell,WarpedFungus,Biome }
+impl FinderType {
+ pub fn category(self)->FinderCategory {match self {
+  Self::BuriedTreasure|Self::DesertPyramid|Self::EndCity|Self::JungleTemple|Self::Monument|Self::SwampHut|Self::Shipwreck|Self::Outpost|Self::Igloo|Self::Village|Self::TrialChambers=>FinderCategory::Structures,
+  Self::EndPillars|Self::EndGateway|Self::Dungeon|Self::EmeraldOre|Self::DesertWell|Self::WarpedFungus=>FinderCategory::Decorators,Self::Biome=>FinderCategory::Biomes}}
+}
+#[derive(Debug,Clone)]
+pub struct BlockFinder { targets:HashSet<String>, min_y:i32,max_y:i32 }
+impl BlockFinder {
+ pub fn new<I,S>(targets:I,min_y:i32,max_y:i32)->Self where I:IntoIterator<Item=S>,S:Into<String>{Self{targets:targets.into_iter().map(|s|s.into().to_ascii_lowercase()).collect(),min_y,max_y}}
+ pub fn find<'a>(&self,blocks:&'a [BlockObservation])->Vec<&'a BlockObservation>{blocks.iter().filter(|b|b.y>=self.min_y&&b.y<=self.max_y&&self.targets.iter().any(|t|b.block.to_ascii_lowercase().ends_with(t))).collect()}
+}
+#[derive(Debug,Clone)]
+pub struct FinderRegistry { enabled:HashSet<FinderType>, generation:u64 }
+impl Default for FinderRegistry {
+ fn default()->Self{Self{enabled:HashSet::from([FinderType::BuriedTreasure,FinderType::DesertPyramid,FinderType::EndCity,FinderType::JungleTemple,FinderType::Monument,FinderType::SwampHut,FinderType::Shipwreck,FinderType::Outpost,FinderType::Igloo,FinderType::Village,FinderType::TrialChambers,FinderType::EndPillars,FinderType::EndGateway,FinderType::Dungeon,FinderType::EmeraldOre,FinderType::DesertWell,FinderType::WarpedFungus,FinderType::Biome]),generation:1}}
+}
+impl FinderRegistry {
+ pub fn enabled(&self,kind:FinderType)->bool{self.enabled.contains(&kind)}
+ pub fn set_enabled(&mut self,kind:FinderType,value:bool){if value{self.enabled.insert(kind);}else{self.enabled.remove(&kind);}self.generation=self.generation.wrapping_add(1);}
+ pub fn generation(&self)->u64{self.generation}
+ pub fn reload(&mut self){self.generation=self.generation.wrapping_add(1);}
+ pub fn enabled_types(&self)->impl Iterator<Item=FinderType>+'_ {self.enabled.iter().copied()}
+}
 #[derive(Debug, Clone, Default)]
 pub struct BlockUpdateBatch { pub updates:Vec<BlockObservation>, pub removed:Vec<(i32,i32,i32)> }
 
