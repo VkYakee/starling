@@ -47,7 +47,7 @@ pub struct SeedCrackerMod {
     seen_structures: HashSet<(String, i32, i32)>,
     seen_treasures: HashSet<(i32,i32)>,
     finder_pipeline: FinderPipeline,
-    block_scan_tx: Sender<(i32,i32,String,Vec<BlockObservation>)>,
+    block_scan_tx: mpsc::SyncSender<(i32,i32,String,Vec<BlockObservation>)>,
     block_scan_rx: Receiver<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>,
 }
 
@@ -58,8 +58,8 @@ impl SeedCrackerMod {
 
         let (solve_tx, work_rx) = mpsc::channel::<(u64, CrackerState)>();
         let (result_tx, solve_rx) = mpsc::channel::<(u64, Vec<i64>)>();
-        let (block_scan_tx, scan_rx) = mpsc::channel::<(i32,i32,String,Vec<BlockObservation>)>();
-        let (scan_result_tx, block_scan_rx) = mpsc::channel::<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>();
+        let (block_scan_tx, scan_rx) = mpsc::sync_channel::<(i32,i32,String,Vec<BlockObservation>)>(32);
+        let (scan_result_tx, block_scan_rx) = mpsc::sync_channel::<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>(32);
         thread::Builder::new().name("SeedCracker finders".into()).spawn(move || {
             let pipeline=FinderPipeline::default();
             while let Ok((cx,cz,dimension,blocks))=scan_rx.recv() {
@@ -203,10 +203,9 @@ impl SeedCrackerMod {
     }
 
     /// Feeds decoded block palettes to the Rust finder engine (structures/decorators/pillars).
-    fn process_block_snapshot(&mut self, blocks: &[BlockObservation]) {
+    fn process_block_snapshot(&mut self, blocks: &[BlockObservation], output: seedcracker::finders::AnalyzerOutput) {
         if !self.active || !self.collecting { return; }
         let snapshot=blocks.to_vec();
-        let output=self.finder_pipeline.scan_blocks(blocks);
         for s in output.structures { if !self.state.structures.iter().any(|v|v.structure_type==s.structure_type&&v.chunk_x==s.chunk_x&&v.chunk_z==s.chunk_z){self.state.structures.push(s);} }
         for hit in output.observations.patterns {
             match hit.kind {
@@ -387,8 +386,8 @@ impl VkMod for SeedCrackerMod {
     fn on_tick(&mut self) {
         // Consume finder results on the game thread; expensive palette/block
         // pattern detection itself runs on the dedicated finder worker.
-        while let Ok((_cx,_cz,_dimension,blocks,_output))=self.block_scan_rx.try_recv() {
-            self.process_block_snapshot(&blocks);
+        while let Ok((_cx,_cz,_dimension,blocks,output))=self.block_scan_rx.try_recv() {
+            self.process_block_snapshot(&blocks,output);
         }
         self.poll_finders();
         self.poll_solver();
