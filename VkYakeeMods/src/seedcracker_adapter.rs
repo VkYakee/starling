@@ -38,7 +38,7 @@ pub struct SeedCrackerMod {
     toasts: VecDeque<ToastLog>,
     seen_chunks: HashSet<(String, i32, i32)>,
     solve_tx: Sender<CrackerState>,
-    solve_rx: Receiver<Vec<i64>>,
+    solve_rx: Receiver<(u64, Vec<i64>)>,
     solving: bool,
     solver_generation: u64,
     seen_biomes: HashSet<(i32, i32)>,
@@ -50,17 +50,17 @@ impl SeedCrackerMod {
         let storage = StorageManager::new();
         let session = storage.load_or_create("default_session");
 
-        let (solve_tx, work_rx) = mpsc::channel::<CrackerState>();
-        let (result_tx, solve_rx) = mpsc::channel::<Vec<i64>>();
+        let (solve_tx, work_rx) = mpsc::channel::<(u64, CrackerState)>();
+        let (result_tx, solve_rx) = mpsc::channel::<(u64, Vec<i64>)>();
         thread::Builder::new().name("SeedCracker solver".into()).spawn(move || {
-            while let Ok(snapshot) = work_rx.recv() {
+            while let Ok((generation, snapshot)) = work_rx.recv() {
                 let seeds = if snapshot.bedrock_blocks.len() >= 20 {
                     let candidates = HierarchicalBedrockCracker::search(&snapshot.bedrock_blocks, 4, None);
                     if let Some(hash) = snapshot.hashed_seed {
                         candidates.into_iter().flat_map(|c| HashedSeed::find_world_seeds_from_hash(c, hash)).collect()
                     } else { candidates.into_iter().map(|c| c as i64).collect() }
                 } else { TimeMachine::solve(&snapshot).world_seeds };
-                let _ = result_tx.send(seeds);
+                let _ = result_tx.send((generation, seeds));
             }
         }).expect("SeedCracker solver thread");
 
@@ -186,7 +186,7 @@ impl SeedCrackerMod {
         if self.state.bedrock_blocks.len() < 20 && self.state.structures.is_empty()
             && self.state.pillar_heights.iter().all(Option::is_none) { return; }
         self.status_message = format!("Analizando {} bloques en worker...", self.state.bedrock_blocks.len());
-        self.solving = self.solve_tx.send(self.state.clone()).is_ok();
+        self.solver_generation = self.solver_generation.wrapping_add(1);\n        self.solving = self.solve_tx.send((self.solver_generation, self.state.clone())).is_ok();
     }
 
     fn poll_solver(&mut self) {
