@@ -432,7 +432,7 @@ impl VkMod for SeedCrackerMod {
                     log::info!("SeedCracker Estado: {}", self.status_message);
                 }
                 "help" => {
-                    log::info!("Comandos: /sc [gui | collect | solve | reset | esp | export | status]");
+                    log::info!("Comandos: /sc [gui | collect | solve | finder reload|finder <name> on/off | reset | esp | export | status]");
                 }
                 _ => {}
             }
