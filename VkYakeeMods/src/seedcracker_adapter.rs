@@ -210,6 +210,19 @@ impl SeedCrackerMod {
     }
     /// Incremental world block mutation invalidates and replaces detector observations.
     pub fn on_block_updates(&mut self, updates: Vec<BlockObservation>, removed: Vec<(i32,i32,i32)>) {
+        let mut changed=removed;
+        changed.extend(updates.iter().map(|b|(b.x,b.y,b.z)));
+        for (x,y,z) in changed {
+            self.state.emerald_ores.retain(|o|o.block_x!=x||o.block_y!=y||o.block_z!=z);
+            self.state.desert_wells.retain(|w|w.block_x!=x||w.block_z!=z);
+            self.state.dungeon_floors.retain(|d|d.block_x!=x||d.block_y!=y||d.block_z!=z);
+            let radius=((x as f64).powi(2)+(z as f64).powi(2)).sqrt();
+            if (38.0..=46.0).contains(&radius)&&(76..=103).contains(&y) {
+                let angle=(z as f64).atan2(x as f64);
+                let idx=(((angle+std::f64::consts::PI)/(2.0*std::f64::consts::PI))*10.0).round() as usize%10;
+                self.state.pillar_heights[idx]=None;
+            }
+        }
         self.finder_pipeline.apply_block_updates(BlockUpdateBatch{updates,removed});
     }
     /// Rebuild detector caches when dimension, version, or collection settings change.
