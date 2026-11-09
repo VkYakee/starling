@@ -834,58 +834,10 @@ impl VkMod for VlakeeUIMod {
     }
 
     fn hud_lines(&self) -> Vec<String> {
-        // F1 hides entire HUD (cinema / screenshot mode)
-        if self.f3_more.f1_hud_hidden || !self.active || !self.show_hud || self.toggles.hide_hud {
-            return Vec::new();
-        }
-
-        let mut lines = Vec::new();
-
-        // If Master F3 is silenced, show notification badge if desired or skip F3
-        if !self.master_f3_active {
-            lines.push("⛔ [ F3 Maestro: APAGADO (SmartF3 + Starling F3 Silenciados) ]".to_string());
-        } else {
-            // 1. SmartF3 Section (Compact or Full)
-            let f3_lines = self.f3.generate_hud_lines();
-            lines.extend(f3_lines);
-        }
-
-        // 2. SmartF3 More Speedrun Indicators (Hitboxes, Chunk Boundaries, Pie Chart)
-        let more_lines = self.f3_more.generate_status_lines();
-        lines.extend(more_lines);
-
-        // 3. InvHUD Section (Capacity & Durability)
-        let inv_lines = self.inv.generate_hud_lines();
-        lines.extend(inv_lines);
-
-        // 4. Chunk Viewer Alert / Location Status
-        if let Some(lbl) = self.chunk_viewer.status_label() {
-            lines.push(format!("🗺️ {}", lbl));
-        }
-
-        // 5. Quick Toggles (Recovery Compass & Night Vision)
-        let (bx, by, bz) = self.f3.block_pos();
-        let toggle_lines = self.toggles.generate_hud_lines(bx, by, bz);
-        lines.extend(toggle_lines);
-
-        // 6. In-Game Pause Drawer (when open)
-        if self.options.is_pause_menu_open {
-            lines.push("┌─ [ 🎮 Opciones Dentro del Juego (Déesse Pause) ]".to_string());
-            for opt_line in self.options.generate_in_game_menu_lines() {
-                lines.push(format!("│  {}", opt_line));
-            }
-            lines.push("└──────────────────────────────────────────────".to_string());
-        }
-
-        // 7. Recent Event Toasts
-        if !self.toasts.is_empty() {
-            lines.push("├─ [ 🔔 Notificaciones VlakeeUI ]".to_string());
-            for t in self.toasts.iter().rev().take(2) {
-                lines.push(format!("│  {}", t.text));
-            }
-        }
-
-        lines
+        // Legacy full-screen text panels are disabled. The module remains
+        // functional; interactive controls and graphical overlays are rendered
+        // by the dedicated VkYakeeMods menu / HUD components.
+        Vec::new()
     }
 
     fn render_bounding_boxes(&self) -> Vec<[f32; 10]> {
