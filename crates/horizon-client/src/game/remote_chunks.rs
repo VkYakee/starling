@@ -312,6 +312,36 @@ impl Game<'_> {
                 },
             );
 
+            // Publish Starling's canonical, already-decoded block snapshot to
+            // SeedCracker. Skip uniform-air sections and cache registry names
+            // per state id so this does not perform a registry lookup per block.
+            let mut block_snapshot: Vec<(i32, i32, i32, String)> = Vec::new();
+            let mut state_names: std::collections::HashMap<u32, String> =
+                std::collections::HashMap::new();
+            if let Some(column) = self.world.chunks.get(&(x, z)) {
+                for (section_index, section) in column.sections.iter().enumerate() {
+                    if section.is_uniform(0) { continue; }
+                    let section_y = column.min_y() + section_index as i32 * 16;
+                    let mut states = [0u32; 4096];
+                    section.unpack(&mut states);
+                    for (index, state_id) in states.into_iter().enumerate() {
+                        if state_id == 0 { continue; }
+                        let name = state_names.entry(state_id).or_insert_with(|| {
+                            self.res.facts().get(state_id).name.as_ref().to_string()
+                        });
+                        if name == "minecraft:air" || name == "minecraft:cave_air"
+                            || name == "minecraft:void_air" { continue; }
+                        let lx = (index & 15) as i32;
+                        let lz = ((index >> 4) & 15) as i32;
+                        let ly = (index >> 8) as i32;
+                        block_snapshot.push((x * 16 + lx, section_y + ly, z * 16 + lz, name.clone()));
+                    }
+                }
+            }
+            if !block_snapshot.is_empty() {
+                vkyakee_mods::on_block_snapshot(x, z, self.dim.id(), &block_snapshot);
+            }
+
             // Subterranean & Surface Structure Scanners (SeedCrackerX parity)
             let is_nether = self.dim.id().contains("nether");
             let is_end = self.dim.id().contains("end");
