@@ -497,85 +497,10 @@ impl VkMod for VkMapMod {
     }
 
     fn hud_lines(&self) -> Vec<String> {
-        if !self.show_hud {
-            return Vec::new();
-        }
-
-        let mut lines = Vec::new();
-        let (px, py, pz) = self.player_pos;
-
-        // Line 1: Header & World Status
-        lines.push(format!(
-            "§6[VkMap] §fMundo: §a{} §7| §e{} §7| §b{} §7| §d{:.1}x",
-            self.current_world_id,
-            self.current_dimension.as_str(),
-            self.engine.minimap.config.display_size.name(),
-            self.engine.minimap.config.zoom
-        ));
-
-        // Line 2: Telemetry
-        let facing = FacingDirection::from_yaw(self.player_yaw).display_name();
-        lines.push(format!(
-            "§7Pos: §f{:.1}, {:.1}, {:.1} §7(§e{}§7) §7| Bioma: §a{}",
-            px, py, pz, facing, self.current_biome
-        ));
-
-        // SeedCracker publication is surfaced without inventing map markers.
-        if let Some(seed) = self.seed_candidate {
-            lines.push(format!("§6SeedCracker: §e0x{:016X} §7(candidato)", seed));
-        }
-
-        // Line 3: Radar Contact Summary
-        let radar_mode = self.engine.radar_tracker.visibility_mode.name();
-        let contact_count = self.simulated_entities.len();
-        lines.push(format!(
-            "§7Radar: §c{} §7(§e{}§7) §7| Entidades: §f{}",
-            if self.engine.radar_tracker.fair_play_mode { "FAIR-PLAY" } else { "ACTIVO" },
-            radar_mode,
-            contact_count
-        ));
-
-        // Line 4: Nearest Discovered Structure (Verified vs Predicted)
-        let dim_structures = self.engine.structure_bridge.get_in_dimension(&self.current_dimension);
-        if let Some(closest) = dim_structures.iter().min_by(|a, b| {
-            let da = (a.block_x as f64 - px).hypot(a.block_z as f64 - pz);
-            let db = (b.block_x as f64 - px).hypot(b.block_z as f64 - pz);
-            da.partial_cmp(&db).unwrap_or(std::cmp::Ordering::Equal)
-        }) {
-            let dist = (closest.block_x as f64 - px).hypot(closest.block_z as f64 - pz);
-            let badge_color = match closest.source {
-                StructureSource::WorldScan => "§a[VERIF]",
-                StructureSource::SeedPrediction => "§6[PRED]",
-            };
-            lines.push(format!(
-                "§7Estructura: {} §f{} §7a §e{:.0}m §7en [{}, {}]",
-                badge_color, closest.display_name, dist, closest.block_x, closest.block_z
-            ));
-        }
-
-        // Line 5: Active Waypoint / ETA
-        let wps = self.engine.waypoint_manager.get_active_in_dimension(&self.current_dimension);
-        if let Some(first_wp) = wps.first() {
-            let dist = first_wp.distance_2d(px, pz);
-            let eta = first_wp.eta_formatted(px, pz, TravelSpeed::Sprinting);
-            lines.push(format!(
-                "§7Nav: §b{} §7a §e{:.0}m §7(ETA: §a{}§7)",
-                first_wp.name, dist, eta
-            ));
-        }
-
-        // Floating Touch Widgets line (rendered adjacent to map on Android)
-        lines.push(format!(
-            "§e[ 🔍+ Ampliar ] [ 🔍- Reducir ] [ 🔎 Zoom: {:.1}x ] [ 🗺️ Menú VkMap ]",
-            self.engine.minimap.config.zoom
-        ));
-
-        // Recent event toasts
-        for t in &self.toasts {
-            lines.push(format!("§6» §f{}", t.text));
-        }
-
-        lines
+        // Legacy full-screen text panels are disabled. The module remains
+        // functional; interactive controls and graphical overlays are rendered
+        // by the dedicated VkYakeeMods menu / HUD components.
+        Vec::new()
     }
 
     fn settings_buttons(&self) -> Vec<String> {
