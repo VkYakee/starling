@@ -22,6 +22,26 @@ struct ChunkEvent { cx:i32, cz:i32, dimension:String, mask:Option<[u8;256]> }
 static CHUNK_EVENTS: OnceLock<Mutex<VecDeque<ChunkEvent>>> = OnceLock::new();
 fn chunk_events()->&'static Mutex<VecDeque<ChunkEvent>> { CHUNK_EVENTS.get_or_init(||Mutex::new(VecDeque::new())) }
 
+// Queue solver publications while MOD_HUB is locked; dispatch after on_tick
+// releases it to prevent SeedCracker -> VkMap recursive-lock deadlocks.
+static SEED_PUBLICATIONS: OnceLock<Mutex<VecDeque<Vec<u64>>>> = OnceLock::new();
+fn seed_publications()->&'static Mutex<VecDeque<Vec<u64>>> {
+    SEED_PUBLICATIONS.get_or_init(|| Mutex::new(VecDeque::new()))
+}
+pub fn publish_seed_candidates(candidates: &[u64]) {
+    if candidates.is_empty() { return; }
+    let mut queue=seed_publications().lock().unwrap_or_else(|e|e.into_inner());
+    if queue.len() >= 8 { queue.pop_front(); }
+    queue.push_back(candidates.to_vec());
+}
+fn dispatch_seed_publications() {
+    let pending:Vec<Vec<u64>> = {
+        let mut queue=seed_publications().lock().unwrap_or_else(|e|e.into_inner());
+        queue.drain(..).collect()
+    };
+    for candidates in pending { broadcast_seed_candidates(&candidates); }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HudTab {
     All,
@@ -123,11 +143,12 @@ pub fn broadcast_seed_candidates(candidates: &[u64]) {
 }
 
 pub fn on_tick() {
-    if let Ok(mut h) = hub().lock() {
-        for m in &mut h.mods {
-            m.on_tick();
+    {
+        if let Ok(mut h) = hub().lock() {
+            for m in &mut h.mods { m.on_tick(); }
         }
-    }
+    } // MOD_HUB released before cross-mod publications
+    dispatch_seed_publications();
 }
 
 pub fn on_command(command: &str, ran: &mut bool) {
