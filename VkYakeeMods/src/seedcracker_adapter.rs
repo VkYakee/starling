@@ -605,45 +605,7 @@ impl VkMod for SeedCrackerMod {
     }
 
     fn hud_lines(&self) -> Vec<String> {
-        if !self.show_hud {
-            return Vec::new();
-        }
-
-        let mut lines = Vec::new();
-        lines.push("┌─ [ VkYakeeMods ] SeedCracker v1.0.0 ─┐".to_string());
-        
-        let col_status = if self.collecting { "[▶ RECOPILACION: ACTIVA]" } else { "[⏸ RECOPILACION: PAUSADA]" };
-        lines.push(format!("│ Modo: {} (Toca p/ alternar)", col_status));
-
-        if let Some(seed) = self.cracked_seed {
-            lines.push(format!("│ ⭐ SEMILLA DESCIFRADA: {}", seed));
-        } else {
-            lines.push(format!("│ Estado: {}", self.status_message));
-            lines.push(format!("│ Chunks: {} | Bedrock: {} blqs | Biomas: {}", 
-                self.session.total_scanned_chunks, 
-                self.state.bedrock_blocks.len(),
-                self.session.biomes.len()
-            ));
-        }
-
-        let verifier_lines = self.verifier.hud_lines();
-        if !verifier_lines.is_empty() {
-            lines.push("├─ Asistente de Verificación:".to_string());
-            for vl in verifier_lines {
-                lines.push(format!("│  {}", vl));
-            }
-        }
-
-        // Mostrar últimos eventos / toasts
-        if !self.toasts.is_empty() {
-            lines.push("├─ Registros Recientes:".to_string());
-            for toast in self.toasts.iter().rev().take(3) {
-                lines.push(format!("│  {}", toast.text));
-            }
-        }
-        lines.push("└─ (/sc collect | /sc solve | /sc reset_all) ─┘".to_string());
-
-        lines
+        Vec::new()
     }
 
     fn render_bounding_boxes(&self) -> Vec<[f32; 10]> {
