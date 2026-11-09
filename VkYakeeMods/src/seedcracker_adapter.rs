@@ -47,6 +47,8 @@ pub struct SeedCrackerMod {
     seen_structures: HashSet<(String, i32, i32)>,
     seen_treasures: HashSet<(i32,i32)>,
     finder_pipeline: FinderPipeline,
+    block_scan_tx: Sender<(i32,i32,String,Vec<BlockObservation>)>,
+    block_scan_rx: Receiver<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>,
 }
 
 impl SeedCrackerMod {
@@ -56,6 +58,15 @@ impl SeedCrackerMod {
 
         let (solve_tx, work_rx) = mpsc::channel::<(u64, CrackerState)>();
         let (result_tx, solve_rx) = mpsc::channel::<(u64, Vec<i64>)>();
+        let (block_scan_tx, scan_rx) = mpsc::channel::<(i32,i32,String,Vec<BlockObservation>)>();
+        let (scan_result_tx, block_scan_rx) = mpsc::channel::<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>();
+        thread::Builder::new().name("SeedCracker finders".into()).spawn(move || {
+            let pipeline=FinderPipeline::default();
+            while let Ok((cx,cz,dimension,blocks))=scan_rx.recv() {
+                let output=pipeline.scan_blocks(&blocks);
+                if scan_result_tx.send((cx,cz,dimension,blocks,output)).is_err(){break;}
+            }
+        }).expect("SeedCracker finder thread");
         thread::Builder::new().name("SeedCracker solver".into()).spawn(move || {
             while let Ok((generation, snapshot)) = work_rx.recv() {
                 // TimeMachine is always executed: it coordinates structures,
@@ -109,6 +120,8 @@ impl SeedCrackerMod {
             seen_structures: HashSet::new(),
             seen_treasures: HashSet::new(),
             finder_pipeline: FinderPipeline::default(),
+            block_scan_tx,
+            block_scan_rx,
         }
     }
 
@@ -190,7 +203,7 @@ impl SeedCrackerMod {
     }
 
     /// Feeds decoded block palettes to the Rust finder engine (structures/decorators/pillars).
-    pub fn on_block_snapshot(&mut self, blocks: &[BlockObservation]) {
+    fn process_block_snapshot(&mut self, blocks: &[BlockObservation]) {
         if !self.active || !self.collecting { return; }
         let snapshot=blocks.to_vec();
         let output=self.finder_pipeline.scan_blocks(blocks);
@@ -371,7 +384,15 @@ impl VkMod for SeedCrackerMod {
         self.status_message = format!("Hashed Seed: 0x{:016X}", hashed_seed);
     }
 
-    fn on_tick(&mut self) { self.poll_finders(); self.poll_solver(); }
+    fn on_tick(&mut self) {
+        // Consume finder results on the game thread; expensive palette/block
+        // pattern detection itself runs on the dedicated finder worker.
+        while let Ok((_cx,_cz,_dimension,blocks,_output))=self.block_scan_rx.try_recv() {
+            self.process_block_snapshot(&blocks);
+        }
+        self.poll_finders();
+        self.poll_solver();
+    }
 
     fn on_chunk_loaded(
         &mut self,
@@ -424,7 +445,12 @@ impl VkMod for SeedCrackerMod {
     fn on_block_snapshot(&mut self, chunk_x:i32, chunk_z:i32, dimension:&str, blocks:&[(i32,i32,i32,String)]) {
         let _=(chunk_x,chunk_z,dimension);
         let observations:Vec<BlockObservation>=blocks.iter().map(|(x,y,z,name)|BlockObservation::new(*x,*y,*z,name.clone())).collect();
-        self.on_block_snapshot(&observations);
+        // Bounded async channel: never stall Starling's chunk commit thread.
+        match self.block_scan_tx.try_send((chunk_x,chunk_z,dimension.to_owned(),observations)) {
+            Ok(())=>{},
+            Err(mpsc::TrySendError::Full(_))=>self.add_toast("SeedCracker: cola de análisis llena; snapshot omitido",0xFFAA00),
+            Err(mpsc::TrySendError::Disconnected(_))=>self.status_message="SeedCracker finder worker desconectado".into(),
+        }
     }
 
     fn on_block_update(&mut self, x:i32, y:i32, z:i32, block:Option<&str>) {
