@@ -35,7 +35,7 @@ impl PatternDetector {
   let has=|x:i32,y:i32,z:i32,name:&str|map.get(&(x,y,z)).is_some_and(|v|v.eq_ignore_ascii_case(name)||v.rsplit(':').next().is_some_and(|tail|tail.eq_ignore_ascii_case(name)));
   for b in blocks {
    let key=(b.x,b.y,b.z,b.block.clone()); if !self.known.insert(key){continue}
-   let n=b.block.to_ascii_lowercase();
+   let n=b.block.rsplit(':').next().unwrap_or(&b.block).to_ascii_lowercase();
    if n.contains("emerald_ore"){out.patterns.push(PatternHit{kind:PatternKind::EmeraldOre,x:b.x,y:b.y,z:b.z});}
    if n=="spawner" || n.ends_with(":spawner") {
     let mut floor=0; for dx in -4..=4 {for dz in -4..=4 {if (-4..=4).contains(&dx)&&(-4..=4).contains(&dz) {let f=map.get(&(b.x+dx,b.y-1,b.z+dz)).copied().unwrap_or("");if f.contains("cobblestone")||f.contains("mossy_cobblestone"){floor+=1}}}}
