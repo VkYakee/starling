@@ -309,7 +309,7 @@ impl SeedCrackerMod {
             }
             self.solving = false;
             let rerun=self.solve_requested; self.solve_requested=false;
-            if rerun { self.solve(); }
+            if rerun { self.solve(); continue; }
             if candidates.is_empty() {
                 self.status_message = "Análisis terminado: sin candidatos".into();
                 continue;
