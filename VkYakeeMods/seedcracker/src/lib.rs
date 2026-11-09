@@ -27,4 +27,4 @@ pub use structures::finder::{CubiomesStructure, StructureLocator};
 pub use structures::lifting::StructureLifter;
 pub use structures::treasure::{TreasureDatabase, TreasureFormation};
 pub use structures::{get_structure_config, StructureInstance, StructureType};
-pub use timemachine::{CrackerResult, CrackerState, StructureSeed48, TimeMachine, WorldSeed64};
+pub use timemachine::{CrackerResult, CrackerState, SolverWorker, StructureSeed48, TimeMachine, WorldSeed64};
