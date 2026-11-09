@@ -47,6 +47,7 @@ pub struct SeedCrackerMod {
     seen_structures: HashSet<(String, i32, i32)>,
     seen_treasures: HashSet<(i32,i32)>,
     finder_pipeline: FinderPipeline,
+    finder_control_tx: Sender<FinderWorkerCommand>,
     block_scan_tx: mpsc::SyncSender<(i32,i32,String,Vec<BlockObservation>)>,
     block_scan_rx: Receiver<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>,
 }
@@ -140,7 +141,7 @@ impl SeedCrackerMod {
 
     pub fn toggle_collection(&mut self) {
         self.collecting = !self.collecting;
-        if self.collecting { self.finder_pipeline.resume(); } else { self.finder_pipeline.pause(); }
+        if self.collecting { self.finder_pipeline.resume(); let _=self.finder_control_tx.send(FinderWorkerCommand::Resume); } else { self.finder_pipeline.pause(); let _=self.finder_control_tx.send(FinderWorkerCommand::Pause); }
         if self.collecting {
             self.add_toast("▶ Recopilacion de datos ACTIVADA", 0x00FF88);
             self.status_message = "Recopilacion activa...".to_string();
@@ -252,7 +253,7 @@ impl SeedCrackerMod {
                 self.state.pillar_heights[idx]=None;
             }
         }
-        self.finder_pipeline.apply_block_updates(BlockUpdateBatch{updates:updates.clone(),removed});
+        let batch=BlockUpdateBatch{updates:updates.clone(),removed};\n        self.finder_pipeline.apply_block_updates(batch.clone());\n        let _=self.finder_control_tx.send(FinderWorkerCommand::Updates(batch));
         if self.collecting && !updates.is_empty() {self.on_block_snapshot(&updates);}
     }
     /// Rebuild detector caches when dimension, version, or collection settings change.
@@ -506,7 +507,7 @@ impl VkMod for SeedCrackerMod {
                             "end_gateway"=>Some(seedcracker::FinderType::EndGateway),"dungeon"=>Some(seedcracker::FinderType::Dungeon),
                             "emerald_ore"=>Some(seedcracker::FinderType::EmeraldOre),"desert_well"=>Some(seedcracker::FinderType::DesertWell),
                             "warped_fungus"=>Some(seedcracker::FinderType::WarpedFungus),_=>None};
-                        if let Some(kind)=kind {let enabled=parts.get(3).copied().unwrap_or("on")!="off";self.finder_pipeline.set_finder_enabled(kind,enabled);self.add_toast(format!("Finder {} {}",name,if enabled{"activado"}else{"desactivado"}),0x00FF88);}
+                        if let Some(kind)=kind {let enabled=parts.get(3).copied().unwrap_or("on")!="off";self.finder_pipeline.set_finder_enabled(kind,enabled);let _=self.finder_control_tx.send(FinderWorkerCommand::SetEnabled(kind,enabled));self.add_toast(format!("Finder {} {}",name,if enabled{"activado"}else{"desactivado"}),0x00FF88);}
                     }
                 }
                 "solve" => {
