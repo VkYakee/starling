@@ -144,8 +144,9 @@ impl TimeMachine {
         for tree in &input.trees {
             if cancelled() { out.cancelled = true; return out; }
             let current: Vec<u64> = structures.iter().map(|s| s.get()).collect();
+            let candidates = if input.tree_candidate_limit == 0 { &current[..] } else { &current[..current.len().min(input.tree_candidate_limit)] };
             tree_candidates.extend(TreeCracker::crack_from_tree(
-                tree, &current, input.tree_candidate_limit.max(1),
+                tree, candidates, 0,
             ).into_iter().map(StructureSeed48::new));
         }
         if !tree_candidates.is_empty() {
