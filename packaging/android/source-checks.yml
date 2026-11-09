@@ -1,10 +1,10 @@
-# The source exporter restores the Android checks and dev APK workflows.
+# Compile and audit the Android source on Jules' working branch.
 name: Android source checks
 on:
   push:
-    branches: [android]
+    branches: [jules]
   pull_request:
-    branches: [android]
+    branches: [jules]
   workflow_dispatch:
     inputs:
       native_checks:
@@ -48,23 +48,15 @@ jobs:
           cmp .github/workflows/android-source.yml packaging/android/source-checks.yml
           cmp .github/workflows/android-dev.yml packaging/android/dev-builds.yml
   native:
-    if: github.event_name == 'workflow_dispatch' && inputs.native_checks
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/jules') || (github.event_name == 'pull_request' && github.base_ref == 'jules') || (github.event_name == 'workflow_dispatch' && inputs.native_checks)
     needs: source
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 100
     strategy:
       fail-fast: false
       max-parallel: 2
       matrix:
-        include:
-          - abi: arm64-v8a
-            target: aarch64-linux-android
-          - abi: armeabi-v7a
-            target: armv7-linux-androideabi
-          - abi: x86
-            target: i686-linux-android
-          - abi: x86_64
-            target: x86_64-linux-android
+        include: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.native_checks) && '[{"abi":"arm64-v8a","target":"aarch64-linux-android"},{"abi":"armeabi-v7a","target":"armv7-linux-androideabi"},{"abi":"x86","target":"i686-linux-android"},{"abi":"x86_64","target":"x86_64-linux-android"}]' || '[{"abi":"arm64-v8a","target":"aarch64-linux-android"}]') }}
     env:
       HORIZON_TELEMETRY_URL: "off"
       CARGO_TARGET_DIR: .local/ci-target
@@ -82,5 +74,5 @@ jobs:
           test -x "$sdkmanager"
           "$sdkmanager" --sdk_root="$ANDROID_HOME" "ndk;28.2.13676358" "build-tools;35.0.0"
           rustup target add "${{ matrix.target }}"
-      - name: Check Android Rust code without building an APK
+      - name: Compile/type-check Android Rust target
         run: python3 tools/android_build.py --abi "${{ matrix.abi }}" --check --public --sdk "$ANDROID_HOME" --java-home "$JAVA_HOME_17_X64" --ndk-version 28.2.13676358 --build-tools-version 35.0.0
