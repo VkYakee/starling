@@ -23,6 +23,19 @@ pub struct ToastLog {
     pub created_at: Instant,
 }
 
+/// Read-only live data consumed by Starling's custom SeedCracker HUD.
+#[derive(Clone, Debug, Default)]
+pub struct SeedCrackerHudSnapshot {
+    pub active: bool, pub collecting: bool, pub solving: bool, pub cracked: Option<i64>,
+    pub chunks: usize, pub bedrock: usize, pub biomes: usize, pub structures: usize,
+    pub dungeons: usize, pub emeralds: usize, pub wells: usize, pub pillars: usize,
+    pub candidates: usize, pub status: String, pub dimension: String,
+}
+static SEEDCRACKER_HUD: std::sync::OnceLock<std::sync::Mutex<SeedCrackerHudSnapshot>> = std::sync::OnceLock::new();
+pub fn seedcracker_hud_snapshot() -> SeedCrackerHudSnapshot {
+    SEEDCRACKER_HUD.get_or_init(||std::sync::Mutex::new(SeedCrackerHudSnapshot::default()))
+        .lock().unwrap_or_else(|e|e.into_inner()).clone()
+}
 pub struct SeedCrackerMod {
     state: CrackerState,
     pub treasure_db: TreasureDatabase,
@@ -405,13 +418,22 @@ impl VkMod for SeedCrackerMod {
     }
 
     fn on_tick(&mut self) {
-        // Consume finder results on the game thread; expensive palette/block
-        // pattern detection itself runs on the dedicated finder worker.
         while let Ok((_cx,_cz,_dimension,blocks,output))=self.block_scan_rx.try_recv() {
             self.process_block_snapshot(&blocks,output);
         }
         self.poll_finders();
         self.poll_solver();
+        let snap=SeedCrackerHudSnapshot {
+            active:self.active, collecting:self.collecting, solving:self.solving, cracked:self.cracked_seed,
+            chunks:self.session.total_scanned_chunks, bedrock:self.state.bedrock_blocks.len(),
+            biomes:self.session.biomes.len(), structures:self.state.structures.len(),
+            dungeons:self.state.dungeon_floors.len(), emeralds:self.state.emerald_ores.len(),
+            wells:self.state.desert_wells.len(), pillars:self.state.pillar_heights.iter().filter(|v|v.is_some()).count(),
+            candidates:self.state.candidate_seeds.len(), status:self.status_message.chars().take(72).collect(),
+            dimension:String::new(),
+        };
+        *SEEDCRACKER_HUD.get_or_init(||std::sync::Mutex::new(SeedCrackerHudSnapshot::default()))
+            .lock().unwrap_or_else(|e|e.into_inner())=snap;
     }
 
     fn on_chunk_loaded(
