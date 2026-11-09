@@ -285,7 +285,11 @@ impl Game<'_> {
         let replaced_column = self.world.chunks.contains_key(&(x, z));
         self.streaming.insert_remote(&mut self.world, chunk);
         {
-            let target_y = if self.dim.id().contains("nether") { 123 } else { 0 };
+            let target_y = if self.dim.id().contains("nether") {
+                123
+            } else {
+                0
+            };
             let mut bedrock_mask = [0u8; 256];
             let mut found_bedrock = false;
             for bz in 0..16 {
@@ -301,7 +305,11 @@ impl Game<'_> {
                 x,
                 z,
                 self.dim.id(),
-                if found_bedrock { Some(&bedrock_mask) } else { None },
+                if found_bedrock {
+                    Some(&bedrock_mask)
+                } else {
+                    None
+                },
             );
 
             // Subterranean & Surface Structure Scanners (SeedCrackerX parity)
@@ -335,9 +343,13 @@ impl Game<'_> {
                                 break;
                             }
                         }
-                        if found_trial { break; }
+                        if found_trial {
+                            break;
+                        }
                     }
-                    if found_trial { break; }
+                    if found_trial {
+                        break;
+                    }
                 }
 
                 // 3. Ancient City: Deepslate levels y in [-50, -15]
@@ -347,15 +359,21 @@ impl Game<'_> {
                         for bx in [4, 11] {
                             let st = self.world.block(x * 16 + bx, y, z * 16 + bz);
                             let name = self.res.facts().get(st).name.as_ref();
-                            if name == "minecraft:reinforced_deepslate" || name == "minecraft:sculk_shrieker" {
+                            if name == "minecraft:reinforced_deepslate"
+                                || name == "minecraft:sculk_shrieker"
+                            {
                                 vkyakee_mods::on_structure_found("minecraft:ancient_city", x, z);
                                 found_ancient = true;
                                 break;
                             }
                         }
-                        if found_ancient { break; }
+                        if found_ancient {
+                            break;
+                        }
                     }
-                    if found_ancient { break; }
+                    if found_ancient {
+                        break;
+                    }
                 }
 
                 // 4. Desert Pyramid: Check y in [55, 75]
