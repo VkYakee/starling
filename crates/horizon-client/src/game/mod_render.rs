@@ -125,12 +125,32 @@ impl Game<'_> {
         batch.text(atlas, "VkYakeeMods", mx + 10.0, my + 10.0, rgba(242, 246, 244, 255), true);
         batch.text(atlas, "MOD MENU", mx + 10.0, my + 24.0, rgba(154, 166, 162, 255), false);
         batch.fill(atlas, mx + 8.0, my + 43.0, mw - 16.0, 1.0, rgba(66, 92, 78, 210));
-        batch.fill(atlas, mx + 8.0, my + 51.0, mw - 16.0, 31.0, rgba(18, 22, 24, 188));
-        batch.fill(atlas, mx + 8.0, my + 51.0, 2.0, 31.0, rgba(52, 214, 112, 255));
-        batch.text(atlas, "SeedCracker", mx + 16.0, my + 57.0, rgba(242, 246, 244, 255), true);
-        batch.text(atlas, "Seed analysis  >", mx + 16.0, my + 70.0, rgba(154, 166, 162, 255), false);
-        batch.text(atlas, "1 MODULE AVAILABLE", mx + 10.0, my + 94.0, rgba(52, 214, 112, 255), false);
-        batch.text(atlas, "Tap VK to close", mx + 10.0, my + 108.0, rgba(154, 166, 162, 255), false);
+        if state.page == vkyakee_mods::MenuPage::Home {
+            batch.fill(atlas, mx + 8.0, my + 51.0, mw - 16.0, 31.0, rgba(18, 22, 24, 188));
+            batch.fill(atlas, mx + 8.0, my + 51.0, 2.0, 31.0, rgba(52, 214, 112, 255));
+            batch.text(atlas, "SeedCracker", mx + 16.0, my + 57.0, rgba(242, 246, 244, 255), true);
+            batch.text(atlas, "Seed analysis  >", mx + 16.0, my + 70.0, rgba(154, 166, 162, 255), false);
+            batch.text(atlas, "1 MODULE AVAILABLE", mx + 10.0, my + 94.0, rgba(52, 214, 112, 255), false);
+            batch.text(atlas, "Tap VK to close", mx + 10.0, my + 108.0, rgba(154, 166, 162, 255), false);
+        } else {
+            let sc = vkyakee_mods::seedcracker_hud_snapshot();
+            batch.text(atlas, "< BACK", mx + 10.0, my + 7.0, rgba(244, 66, 82, 255), true);
+            batch.text(atlas, "SEEDCRACKER", mx + 58.0, my + 7.0, rgba(242, 246, 244, 255), true);
+            batch.text(atlas, if sc.collecting { "SCAN: ON" } else { "SCAN: PAUSED" }, mx + 10.0, my + 25.0,
+                if sc.collecting { rgba(52, 214, 112, 255) } else { rgba(244, 66, 82, 255) }, true);
+            batch.text(atlas, if sc.solving { "SOLVER: RUNNING" } else if sc.cracked.is_some() { "SOLVER: FOUND" } else { "SOLVER: IDLE" }, mx + 100.0, my + 25.0, rgba(154, 166, 162, 255), false);
+            batch.fill(atlas, mx + 8.0, my + 43.0, mw - 16.0, 1.0, rgba(66, 92, 78, 210));
+            batch.text(atlas, &format!("Chunks {:>5}  Bedrock {:>4}", sc.chunks, sc.bedrock), mx + 10.0, my + 49.0, rgba(242, 246, 244, 255), false);
+            batch.text(atlas, &format!("Structures {:>3}  Biomes {:>4}", sc.structures, sc.biomes), mx + 10.0, my + 62.0, rgba(242, 246, 244, 255), false);
+            batch.text(atlas, &format!("Dungeon {}  Ore {}  Well {}", sc.dungeons, sc.emeralds, sc.wells), mx + 10.0, my + 75.0, rgba(154, 166, 162, 255), false);
+            batch.text(atlas, &format!("Pillars {}  Candidates {}", sc.pillars, sc.candidates), mx + 10.0, my + 88.0, rgba(154, 166, 162, 255), false);
+            if let Some(seed) = sc.cracked { batch.text(atlas, &format!("SEED: {}", seed), mx + 10.0, my + 101.0, rgba(52, 214, 112, 255), true); }
+            else { batch.text(atlas, &sc.status, mx + 10.0, my + 101.0, rgba(242, 246, 244, 255), false); }
+            batch.fill(atlas, mx + 8.0, my + 116.0, 80.0, 20.0, rgba(20, 126, 72, 210));
+            batch.fill(atlas, mx + 94.0, my + 116.0, 80.0, 20.0, rgba(150, 30, 48, 210));
+            batch.text(atlas, "SOLVE", mx + 28.0, my + 121.0, rgba(255, 255, 255, 255), true);
+            batch.text(atlas, "RESET", mx + 116.0, my + 121.0, rgba(255, 255, 255, 255), true);
+        }
     }
 
     /// Shapes with their GUI coordinates moved by `(ox, oy)`.
