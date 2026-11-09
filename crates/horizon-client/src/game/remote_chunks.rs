@@ -327,7 +327,7 @@ impl Game<'_> {
                     for (index, state_id) in states.into_iter().enumerate() {
                         if state_id == 0 { continue; }
                         let name = state_names.entry(state_id).or_insert_with(|| {
-                            self.res.facts().get(state_id).name.as_ref().to_string()
+                            self.res.facts().get(horizon_world::registry::BlockStateId(state_id)).name.as_ref().to_string()
                         });
                         if name == "minecraft:air" || name == "minecraft:cave_air"
                             || name == "minecraft:void_air" { continue; }
