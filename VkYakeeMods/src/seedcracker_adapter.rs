@@ -183,8 +183,8 @@ impl SeedCrackerMod {
         for s in output.structures { if !self.state.structures.iter().any(|v|v.structure_type==s.structure_type&&v.chunk_x==s.chunk_x&&v.chunk_z==s.chunk_z){self.state.structures.push(s);} }
         for hit in output.observations.patterns {
             match hit.kind {
-                PatternKind::EmeraldOre => self.state.emerald_ores.push(seedcracker::EmeraldOreData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.y,hit.z)),
-                PatternKind::DesertWell => self.state.desert_wells.push(seedcracker::DesertWellData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.z)),
+                PatternKind::EmeraldOre => { let data=seedcracker::EmeraldOreData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.y,hit.z);if !self.state.emerald_ores.iter().any(|e|e.block_x==data.block_x&&e.block_y==data.block_y&&e.block_z==data.block_z){self.state.emerald_ores.push(data);} },
+                PatternKind::DesertWell => {let data=seedcracker::DesertWellData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.z);if !self.state.desert_wells.iter().any(|w|w.block_x==data.block_x&&w.block_z==data.block_z){self.state.desert_wells.push(data);} },
                 PatternKind::EndPillar => {
                     let angle=(hit.z as f64).atan2(hit.x as f64);
                     let idx=(((angle+std::f64::consts::PI)/(2.0*std::f64::consts::PI))*10.0).round() as usize%10;
@@ -198,7 +198,7 @@ impl SeedCrackerMod {
         self.finder_pipeline.apply_block_updates(BlockUpdateBatch{updates,removed});
     }
     /// Rebuild detector caches when dimension, version, or collection settings change.
-    pub fn reload_finders(&mut self) { self.finder_pipeline.reset_finders(); self.seen_chunks.clear(); }
+    pub fn reload_finders(&mut self) { self.finder_pipeline.reload_finders(); self.seen_chunks.clear(); self.seen_biomes.clear(); self.seen_structures.clear(); }
     pub fn reset(&mut self) {
         self.reset_all();
     }
