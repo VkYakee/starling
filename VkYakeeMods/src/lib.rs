@@ -10,7 +10,11 @@ pub mod vlakee_ui_adapter;
 pub use api::{ModMetadata, VkMod};
 pub use mod_menu::{FloatingButtonTheme, MenuAction, MenuPage, MenuTheme, ModMenuState, ModuleStatus};
 pub use horizonmatica_adapter::HorizonMaticaMod;
-pub use seedcracker_adapter::SeedCrackerMod;
+pub use seedcracker_adapter::{SeedCrackerMod, SeedCrackerHudSnapshot};
+pub fn seedcracker_hud_snapshot() -> SeedCrackerHudSnapshot { seedcracker_adapter::seedcracker_hud_snapshot() }
+pub fn seedcracker_hud_action(command: &str) {
+    if let Ok(mut h) = hub().lock() { for m in &mut h.mods { if m.metadata().id == "seedcracker" { let _ = m.on_command(command); break; } } }
+}
 pub use storage::StorageManager;
 pub use verifier::SeedVerifier;
 pub use vkmap_adapter::VkMapMod;
