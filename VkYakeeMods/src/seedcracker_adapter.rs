@@ -29,7 +29,7 @@ pub struct SeedCrackerHudSnapshot {
     pub active: bool, pub collecting: bool, pub solving: bool, pub cracked: Option<i64>,
     pub chunks: usize, pub bedrock: usize, pub biomes: usize, pub structures: usize,
     pub dungeons: usize, pub emeralds: usize, pub wells: usize, pub pillars: usize,
-    pub candidates: usize, pub status: String, pub dimension: String,
+    pub candidates: usize, pub status: String, pub dimension: String, pub finders: Vec<(String,bool)>,
 }
 static SEEDCRACKER_HUD: std::sync::OnceLock<std::sync::Mutex<SeedCrackerHudSnapshot>> = std::sync::OnceLock::new();
 pub fn seedcracker_hud_snapshot() -> SeedCrackerHudSnapshot {
@@ -431,6 +431,27 @@ impl VkMod for SeedCrackerMod {
             wells:self.state.desert_wells.len(), pillars:self.state.pillar_heights.iter().filter(|v|v.is_some()).count(),
             candidates:self.state.candidate_seeds.len(), status:self.status_message.chars().take(72).collect(),
             dimension:String::new(),
+            finders: vec![
+                ("treasure".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::BuriedTreasure)),
+                ("desert_pyramid".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::DesertPyramid)),
+                ("jungle_temple".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::JungleTemple)),
+                ("swamp_hut".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::SwampHut)),
+                ("igloo".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Igloo)),
+                ("village".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Village)),
+                ("biome".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Biome)),
+                ("shipwreck".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Shipwreck)),
+                ("monument".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Monument)),
+                ("outpost".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Outpost)),
+                ("end_city".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::EndCity)),
+                ("trial_chambers".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::TrialChambers)),
+                ("ancient_city".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::AncientCity)),
+                ("end_pillars".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::EndPillars)),
+                ("end_gateway".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::EndGateway)),
+                ("dungeon".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Dungeon)),
+                ("emerald_ore".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::EmeraldOre)),
+                ("desert_well".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::DesertWell)),
+                ("warped_fungus".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::WarpedFungus)),
+            ],
         };
         *SEEDCRACKER_HUD.get_or_init(||std::sync::Mutex::new(SeedCrackerHudSnapshot::default()))
             .lock().unwrap_or_else(|e|e.into_inner())=snap;
