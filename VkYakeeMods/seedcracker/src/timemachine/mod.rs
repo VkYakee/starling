@@ -35,7 +35,7 @@ impl WorldSeed64 {
     pub const fn get(self) -> i64 { self.0 }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct CrackerState {
     pub bedrock_blocks: Vec<BedrockBlock>,
     /// Explicit candidates for Bedrock checks only; never treated as structure seeds.
@@ -52,9 +52,13 @@ pub struct CrackerState {
     pub structure_candidates: Vec<StructureSeed48>,
     pub tree_candidate_limit: usize,
 }
+impl Default for CrackerState {
+    fn default() -> Self { Self { target_mc_version: MC_1_20, tree_candidate_limit: 10_000, ..Self::empty() } }
+}
 impl CrackerState {
+    fn empty() -> Self { Self { bedrock_blocks: Vec::new(), candidate_seeds: Vec::new(), dungeon_floors: Vec::new(), pillar_heights: [None; PILLAR_COUNT], structures: Vec::new(), trees: Vec::new(), emerald_ores: Vec::new(), desert_wells: Vec::new(), biome_samples: Vec::new(), hashed_seed: None, target_mc_version: MC_1_20, structure_candidates: Vec::new(), tree_candidate_limit: 10_000 } }
     pub fn new() -> Self {
-        Self { target_mc_version: MC_1_20, tree_candidate_limit: 10_000, ..Self::default() }
+        Self::default()
     }
     pub fn normalize(&mut self) {
         self.candidate_seeds.sort_unstable(); self.candidate_seeds.dedup();
