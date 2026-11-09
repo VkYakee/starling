@@ -109,7 +109,7 @@ impl Game<'_> {
         batch.text(atlas, "VK", bx + 9.0, by + 13.0, rgba(242, 246, 244, 255), true);
         if !state.open { return; }
 
-        let (mw, mh) = (184.0, 124.0);
+        let (mw, mh) = (184.0, 150.0);
         let mx = (bx - mw - 10.0).max(4.0);
         let my = (by - 28.0).clamp(4.0, (h - mh - 4.0).max(4.0));
         batch.fill(atlas, mx + 2.0, my + 3.0, mw, mh, rgba(0, 0, 0, 115));
