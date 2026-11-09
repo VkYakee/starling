@@ -132,6 +132,21 @@ impl Game<'_> {
             batch.text(atlas, "Seed analysis  >", mx + 16.0, my + 70.0, rgba(154, 166, 162, 255), false);
             batch.text(atlas, "1 MODULE AVAILABLE", mx + 10.0, my + 94.0, rgba(52, 214, 112, 255), false);
             batch.text(atlas, "Tap VK to close", mx + 10.0, my + 108.0, rgba(154, 166, 162, 255), false);
+        } else if state.page == vkyakee_mods::MenuPage::SeedFinders {
+            let sc = vkyakee_mods::seedcracker_hud_snapshot();
+            batch.text(atlas, "< BACK", mx + 10.0, my + 7.0, rgba(244, 66, 82, 255), true);
+            batch.text(atlas, "FINDER CONFIG", mx + 62.0, my + 7.0, rgba(242, 246, 244, 255), true);
+            batch.text(atlas, "Tap row to enable / disable", mx + 10.0, my + 24.0, rgba(154, 166, 162, 255), false);
+            for (i in 0..9 {
+                if let Some((name, enabled)) = sc.finders.get(i) {
+                    let y = my + 39.0 + i as f32 * 12.0;
+                    batch.fill(atlas, mx + 8.0, y, mw - 16.0, 11.0, rgba(18, 22, 24, 190));
+                    batch.fill(atlas, mx + 8.0, y, 2.0, 11.0, if *enabled { rgba(52, 214, 112, 255) } else { rgba(244, 66, 82, 255) });
+                    batch.text(atlas, name, mx + 15.0, y + 2.0, rgba(242, 246, 244, 255), false);
+                    batch.text(atlas, if *enabled { "ON" } else { "OFF" }, mx + 151.0, y + 2.0, if *enabled { rgba(52, 214, 112, 255) } else { rgba(244, 66, 82, 255) }, true);
+                }
+            }
+            batch.text(atlas, "1-9 / 19 finders", mx + 10.0, my + 151.0, rgba(154, 166, 162, 255), false);
         } else {
             let sc = vkyakee_mods::seedcracker_hud_snapshot();
             batch.text(atlas, "< BACK", mx + 10.0, my + 7.0, rgba(244, 66, 82, 255), true);
@@ -153,7 +168,7 @@ impl Game<'_> {
             batch.fill(atlas, mx + 8.0, my + 143.0, 80.0, 20.0, rgba(18, 22, 24, 205));
             batch.fill(atlas, mx + 94.0, my + 143.0, 80.0, 20.0, rgba(18, 22, 24, 205));
             batch.text(atlas, "ESP TOGGLE", mx + 17.0, my + 148.0, rgba(52, 214, 112, 255), false);
-            batch.text(atlas, "FINDERS ↻", mx + 103.0, my + 148.0, rgba(244, 66, 82, 255), false);
+            batch.text(atlas, "FINDERS", mx + 112.0, my + 148.0, rgba(244, 66, 82, 255), false);
         }
     }
 
