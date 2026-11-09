@@ -433,7 +433,7 @@ impl VkMod for SeedCrackerMod {
                             "treasure"|"buried_treasure"=>Some(seedcracker::FinderType::BuriedTreasure),
                             "desert_pyramid"|"desert_temple"=>Some(seedcracker::FinderType::DesertPyramid),
                             "jungle_temple"=>Some(seedcracker::FinderType::JungleTemple),"swamp_hut"=>Some(seedcracker::FinderType::SwampHut),
-                            "igloo"=>Some(seedcracker::FinderType::Igloo),"village"=>Some(seedcracker::FinderType::Biome),
+                            "igloo"=>Some(seedcracker::FinderType::Igloo),"village"=>Some(seedcracker::FinderType::Village),"biome"=>Some(seedcracker::FinderType::Biome),
                             "shipwreck"=>Some(seedcracker::FinderType::Shipwreck),"monument"=>Some(seedcracker::FinderType::Monument),
                             "outpost"=>Some(seedcracker::FinderType::Outpost),"end_city"=>Some(seedcracker::FinderType::EndCity),
                             "trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),"end_pillars"=>Some(seedcracker::FinderType::EndPillars),
