@@ -12,10 +12,10 @@ use control::FinderControl;
 use queue::{FinderQueue, FinderQueueStats};
 use std::sync::{Arc, Mutex};
 
-pub use builder::{FinderBuilder as JobBuilder, FinderJob as Job, FinderKind as Kind};
-pub use control::{FinderControl as Control, FinderStatus};
-pub use queue::{FinderQueue as Queue, FinderQueueStats as QueueStats, QueuedFinder};
-pub use analyzers::{ChunkAnalyzer as Analyzer, AnalyzerOutput as Output, BedrockAnalyzer as Bedrock, StructureAnalyzer as Structures};
+pub use builder::{FinderBuilder, FinderJob, FinderKind};
+pub use control::{FinderControl, FinderStatus};
+pub use queue::{FinderQueue, FinderQueueStats, QueuedFinder};
+pub use analyzers::{ChunkAnalyzer, AnalyzerOutput, BedrockAnalyzer, StructureAnalyzer};
 pub use observations::{BlockObservation, BlockUpdateBatch, FinderObservations, PatternDetector, PatternHit, PatternKind, FinderCategory, FinderType, BlockFinder, FinderRegistry};
 
 #[derive(Clone, Default)]
@@ -84,9 +84,9 @@ impl FinderPipeline {
         if !self.control.is_current(queued.job.generation){self.queue.mark_cancelled();return None;}
         let job=queued.job;let mut output=AnalyzerOutput::default();
         match job.kind {
-            FinderKind::Bedrock=>output=BedrockAnalyzer.analyze(job.chunk_x,job.chunk_z,&job.bedrock),
-            FinderKind::Structure=>output=StructureAnalyzer.analyze(job.chunk_x,job.chunk_z,&job.bedrock),
-            FinderKind::Combined=>{output=BedrockAnalyzer.analyze(job.chunk_x,job.chunk_z,&job.bedrock);if self.control.is_current(job.generation){output.structures.extend(StructureAnalyzer.analyze(job.chunk_x,job.chunk_z,&job.bedrock).structures);}}
+            FinderKind::Bedrock=>output=BedrockAnalyzer::analyze(job.chunk_x,job.chunk_z,&job.bedrock),
+            FinderKind::Structure=>output=StructureAnalyzer::analyze(job.chunk_x,job.chunk_z,&job.bedrock),
+            FinderKind::Combined=>{output=BedrockAnalyzer::analyze(job.chunk_x,job.chunk_z,&job.bedrock);if self.control.is_current(job.generation){output.structures.extend(StructureAnalyzer::analyze(job.chunk_x,job.chunk_z,&job.bedrock).structures);}}
         }
         if !self.control.is_current(job.generation){self.queue.mark_cancelled();return None;}
         self.queue.mark_completed();Some((queued.sequence,output))
