@@ -86,10 +86,53 @@ impl Game<'_> {
 impl Game<'_> {
     /// The running mods' HUD shapes, in order, over the HUD.
     pub(super) fn draw_mod_shapes(&self, batch: &mut HudBatch) {
+        self.draw_vkyakee_menu(batch);
         for shape in self.mods.mods.hud_shapes() {
             self.draw_shapes(batch, std::slice::from_ref(shape), (0.0, 0.0));
         }
     }
+    /// VkYakeeMods floating launcher and translucent green/red menu.
+    /// Kept in Starling's HUD batch so it follows GUI scaling and render order.
+    fn draw_vkyakee_menu(&self, batch: &mut HudBatch) {
+        let state = vkyakee_mods::mod_menu_state()
+            .lock().unwrap_or_else(|e| e.into_inner()).clone();
+        if !state.visible { return; }
+        let atlas = &self.gui.atlas;
+        let (w, h) = (batch.width, batch.height);
+        let bx = (w - 52.0).max(4.0);
+        let by = (h * 0.52 - 21.0).clamp(4.0, (h - 46.0).max(4.0));
+        // Button shadow + charcoal glass + green outline and VK lettering.
+        batch.fill(atlas, bx - 2.0, by - 2.0, 46.0, 46.0, rgba(0, 0, 0, 105));
+        batch.fill(atlas, bx, by, 42.0, 42.0, rgba(12, 16, 18, 205));
+        batch.fill(atlas, bx, by, 42.0, 2.0, rgba(52, 214, 112, 235));
+        batch.fill(atlas, bx, by + 40.0, 42.0, 2.0, rgba(244, 66, 82, 235));
+        batch.text(atlas, "VK", bx + 9.0, by + 13.0, rgba(242, 246, 244, 255), true);
+        if !state.open { return; }
+
+        let (mw, mh) = (184.0, 124.0);
+        let mx = (bx - mw - 10.0).max(4.0);
+        let my = (by - 28.0).clamp(4.0, (h - mh - 4.0).max(4.0));
+        batch.fill(atlas, mx + 2.0, my + 3.0, mw, mh, rgba(0, 0, 0, 115));
+        batch.fill(atlas, mx, my, mw, mh, rgba(12, 16, 18, state.opacity));
+        // 12 vertical accent slices approximate a green -> red gradient.
+        for i in 0..12 {
+            let t = i as f32 / 11.0;
+            let r = (52.0 + (244.0 - 52.0) * t) as u8;
+            let g = (214.0 + (66.0 - 214.0) * t) as u8;
+            let b = (112.0 + (82.0 - 112.0) * t) as u8;
+            batch.fill(atlas, mx + i as f32 * (mw / 12.0), my, mw / 12.0 + 0.5, 3.0, rgba(r, g, b, 255));
+        }
+        batch.text(atlas, "VkYakeeMods", mx + 10.0, my + 10.0, rgba(242, 246, 244, 255), true);
+        batch.text(atlas, "MOD MENU", mx + 10.0, my + 24.0, rgba(154, 166, 162, 255), false);
+        batch.fill(atlas, mx + 8.0, my + 43.0, mw - 16.0, 1.0, rgba(66, 92, 78, 210));
+        batch.fill(atlas, mx + 8.0, my + 51.0, mw - 16.0, 31.0, rgba(18, 22, 24, 188));
+        batch.fill(atlas, mx + 8.0, my + 51.0, 2.0, 31.0, rgba(52, 214, 112, 255));
+        batch.text(atlas, "SeedCracker", mx + 16.0, my + 57.0, rgba(242, 246, 244, 255), true);
+        batch.text(atlas, "Seed analysis  >", mx + 16.0, my + 70.0, rgba(154, 166, 162, 255), false);
+        batch.text(atlas, "1 MODULE AVAILABLE", mx + 10.0, my + 94.0, rgba(52, 214, 112, 255), false);
+        batch.text(atlas, "Tap VK to close", mx + 10.0, my + 108.0, rgba(154, 166, 162, 255), false);
+    }
+
     /// Shapes with their GUI coordinates moved by `(ox, oy)`.
     pub(super) fn draw_shapes(&self, batch: &mut HudBatch, shapes: &[Shape], (ox, oy): (f32, f32)) {
         let atlas = &self.gui.atlas;
