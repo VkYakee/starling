@@ -39,6 +39,14 @@ pub trait VkMod: Send + Sync {
         let _ = (cx, cz, dimension, bedrock_mask);
     }
 
+    /// Supplies a decoded chunk palette to mods that perform block-pattern analysis.
+    fn on_block_snapshot(&mut self, chunk_x:i32, chunk_z:i32, dimension:&str, blocks:&[(i32,i32,i32,String)]) {
+        let _=(chunk_x,chunk_z,dimension,blocks);
+    }
+
+    /// Incremental block-state mutation (including block removal).
+    fn on_block_update(&mut self, x:i32, y:i32, z:i32, block:Option<&str>) { let _=(x,y,z,block); }
+
     /// Called when the player steps into or discovers a new biome.
     fn on_biome_found(&mut self, x: i32, z: i32, biome_id: i32, name: &str) {
         let _ = (x, z, biome_id, name);
