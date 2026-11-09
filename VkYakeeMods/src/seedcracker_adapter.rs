@@ -135,9 +135,7 @@ impl SeedCrackerMod {
 
     pub fn record_biome(&mut self, x: i32, z: i32, biome_id: i32, name: &str) {
         self.verifier.update_player_pos(x, z);
-        if !self.collecting {
-            return;
-        }
+        if !self.collecting || !self.finder_pipeline.finder_enabled(seedcracker::FinderType::Biome) { return; }
         let key = (x, z); // Cada coordenada biome observada aporta una restricción independiente
         if self.seen_biomes.insert(key) {
             self.state.biome_samples.push(seedcracker::biomes::BiomeSample::new(x, 0, z, biome_id));
