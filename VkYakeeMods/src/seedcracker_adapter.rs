@@ -192,9 +192,12 @@ impl SeedCrackerMod {
                     if !self.state.dungeon_floors.iter().any(|d|d.block_x==hit.x&&d.block_y==hit.y&&d.block_z==hit.z){self.state.dungeon_floors.push(seedcracker::dungeon::DungeonFloor::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.y,hit.z,9,9,calls));}
                 },
                 PatternKind::EndPillar => {
-                    let angle=(hit.z as f64).atan2(hit.x as f64);
-                    let idx=(((angle+std::f64::consts::PI)/(2.0*std::f64::consts::PI))*10.0).round() as usize%10;
-                    if (76..=103).contains(&hit.y) { self.state.pillar_heights[idx]=Some(hit.y); }
+                    let radius=((hit.x as f64).powi(2)+(hit.z as f64).powi(2)).sqrt();
+                    if (38.0..=46.0).contains(&radius) {
+                        let angle=(hit.z as f64).atan2(hit.x as f64);
+                        let idx=(((angle+std::f64::consts::PI)/(2.0*std::f64::consts::PI))*10.0).round() as usize%10;
+                        if (76..=103).contains(&hit.y) { self.state.pillar_heights[idx]=Some(self.state.pillar_heights[idx].unwrap_or(0).max(hit.y)); }
+                    }
                 }, _=>{}
             }
         }
