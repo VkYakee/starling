@@ -80,6 +80,9 @@ pub struct CrackerResult {
     pub world_seeds: Vec<i64>,
     pub cancelled: bool,
     pub validated: bool,
+    pub resolution_complete: bool,
+    pub structure_search_cursor: StructureSearchCursor,
+    pub structure_search_complete: bool,
 }
 impl CrackerResult {
     fn normalize(&mut self) {
@@ -118,6 +121,8 @@ impl TimeMachine {
             &out.pillar_seeds, &input.structures, input.structure_search_cursor,
             input.structure_search_budget, cancel.as_ref(),
         );
+        out.structure_search_cursor = structure_batch.cursor;
+        out.structure_search_complete = structure_batch.finished;
         structures.extend(structure_batch.seeds.into_iter().map(StructureSeed48::new));
         if input.structures.len() >= 2 {
             structures.extend(StructureLifter::lift_structures_range(
@@ -186,6 +191,8 @@ impl TimeMachine {
         }).map(WorldSeed64::get).collect();
         out.validated = !out.world_seeds.is_empty()
             && (input.hashed_seed.is_some() || !input.biome_samples.is_empty());
+        // A candidate is not a completed SeedCrackerX resolution while any exhaustive route is unfinished.
+        out.resolution_complete = out.validated && out.structure_search_complete;
         out.normalize(); out
     }
 }
