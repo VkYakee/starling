@@ -520,6 +520,11 @@ impl VkMod for VkMapMod {
             px, py, pz, facing, self.current_biome
         ));
 
+        // SeedCracker publication is surfaced without inventing map markers.
+        if let Some(seed) = self.seed_candidate {
+            lines.push(format!("§6SeedCracker: §e0x{:016X} §7(candidato)", seed));
+        }
+
         // Line 3: Radar Contact Summary
         let radar_mode = self.engine.radar_tracker.visibility_mode.name();
         let contact_count = self.simulated_entities.len();
