@@ -138,7 +138,7 @@ impl SeedCrackerMod {
         if !self.collecting {
             return;
         }
-        let key = (x >> 6, z >> 6); // Agrupar por áreas de 64 bloques
+        let key = (x, z); // Cada coordenada biome observada aporta una restricción independiente
         if self.seen_biomes.insert(key) {
             self.state.biome_samples.push(seedcracker::biomes::BiomeSample::new(x, 0, z, biome_id));
             let msg = format!("🌿 Bioma: {} en [{}, {}]", name, x, z);
