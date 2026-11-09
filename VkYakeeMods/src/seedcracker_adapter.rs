@@ -272,7 +272,7 @@ impl SeedCrackerMod {
     }
     /// Incremental world block mutation invalidates and replaces detector observations.
     pub fn on_block_updates(&mut self, updates: Vec<BlockObservation>, removed: Vec<(i32,i32,i32)>) {
-        let mut changed=removed;
+        let mut changed=removed.clone();
         changed.extend(updates.iter().map(|b|(b.x,b.y,b.z)));
         for (x,y,z) in changed {
             self.state.emerald_ores.retain(|o|o.block_x!=x||o.block_y!=y||o.block_z!=z);
@@ -365,7 +365,9 @@ impl SeedCrackerMod {
     }
 
     fn poll_solver(&mut self) {
-        while let Ok((generation, candidates)) = self.solve_rx.lock().unwrap_or_else(|e|e.into_inner()).try_recv() {
+        loop {
+            let received = { self.solve_rx.lock().unwrap_or_else(|e|e.into_inner()).try_recv() };
+            let Ok((generation, candidates)) = received else { break; };
             // Ignore results from a reset or a superseded solve request.
             if generation != self.solver_generation {
                 continue;
@@ -419,7 +421,9 @@ impl VkMod for SeedCrackerMod {
     }
 
     fn on_tick(&mut self) {
-        while let Ok((_cx,_cz,_dimension,blocks,output))=self.block_scan_rx.lock().unwrap_or_else(|e|e.into_inner()).try_recv() {
+        loop {
+            let received = { self.block_scan_rx.lock().unwrap_or_else(|e|e.into_inner()).try_recv() };
+            let Ok((_cx,_cz,_dimension,blocks,output)) = received else { break; };
             self.process_block_snapshot(&blocks,output);
         }
         self.poll_finders();
