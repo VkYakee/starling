@@ -74,6 +74,8 @@ pub struct VkMapMod {
     pub toasts: VecDeque<ToastLog>,
     pub auto_save_counter: u64,
     pub simulated_entities: Vec<RadarEntity>,
+    /// Latest world-seed candidate published by SeedCracker (not a structure seed).
+    pub seed_candidate: Option<u64>,
 }
 
 impl Default for VkMapMod {
@@ -120,6 +122,7 @@ impl VkMapMod {
             toasts: VecDeque::new(),
             auto_save_counter: 0,
             simulated_entities: Vec::new(),
+            seed_candidate: None,
         }
     }
 
@@ -197,53 +200,15 @@ impl VkMapMod {
         let _ = self.save_current_world();
     }
 
-    /// Synchronizes mathematically predicted structures from SeedCracker.
+    /// Receives SeedCracker's progressive world-seed candidate publication.
+    /// Do not fabricate structure locations from a hash/modulo heuristic: VkMap
+    /// only draws SeedPrediction markers after a real Minecraft placement check.
     pub fn sync_predicted_structures(&mut self, candidates: &[u64]) {
-        if candidates.is_empty() {
-            return;
-        }
-
-        // For each candidate seed, predict prominent structures
-        let test_seed = candidates[0];
-        let px_chunk = (self.player_pos.0.round() as i32) >> 4;
-        let pz_chunk = (self.player_pos.2.round() as i32) >> 4;
-
-        // Predict nearby Trial Chambers and Ancient Cities
-        for dx in -8..=8 {
-            for dz in -8..=8 {
-                let cx = px_chunk + dx;
-                let cz = pz_chunk + dz;
-
-                // Deterministic check for Trial Chambers using Minecraft 1.21 chunk spacing (chunk coords)
-                let chunk_hash = (cx as i64)
-                    .wrapping_mul(341873128712)
-                    .wrapping_add((cz as i64).wrapping_mul(132897987541))
-                    .wrapping_add(test_seed as i64);
-
-                if (chunk_hash.abs() % 48) == 7 {
-                    self.engine.structure_bridge.register_predicted_structure(
-                        "minecraft:trial_chambers",
-                        cx,
-                        cz,
-                        -16,
-                        Dimension::Overworld,
-                    );
-                } else if (chunk_hash.abs() % 64) == 23 {
-                    self.engine.structure_bridge.register_predicted_structure(
-                        "minecraft:ancient_city",
-                        cx,
-                        cz,
-                        -48,
-                        Dimension::Overworld,
-                    );
-                }
-            }
-        }
-
-        self.add_toast(
-            format!("📡 SeedCracker: Predicciones sincronizadas con semilla 0x{:012X}", test_seed),
-            0xFFD700,
-        );
+        let Some(&seed) = candidates.first() else { return; };
+        self.seed_candidate = Some(seed);
+        let msg = format!("SeedCracker: candidato de mundo 0x{:016X} recibido; mapa esperando predicción validada", seed);
+        self.status_message = msg.clone();
+        self.add_toast(msg, 0xFFD700);
     }
 
     /// Exports full high-resolution PNG image map to `/sdcard/VkYakeeMods/VkMap/exports/`.
