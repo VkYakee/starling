@@ -154,25 +154,33 @@ impl SeedCrackerMod {
 
     pub fn record_structure(&mut self, st_type: &str, chunk_x: i32, chunk_z: i32) {
         self.verifier.on_structure_found(st_type, chunk_x, chunk_z);
-        if !self.collecting {
-            return;
-        }
-        let key = (chunk_x, chunk_z);
-        if self.seen_structures.insert(key) {
-            let bx = chunk_x * 16;
-            let bz = chunk_z * 16;
-            let msg = format!("🏛️ Estructura: {} en Chunk ({}, {})", st_type, chunk_x, chunk_z);
-            self.add_toast(msg, 0xFFD700);
-
-            self.session.structures.push(DiscoveredStructure {
-                structure_type: st_type.to_string(),
-                chunk_x,
-                chunk_z,
-                block_x: bx,
-                block_z: bz,
-            });
-            let _ = self.storage.save(&self.session);
-        }
+        if !self.collecting { return; }
+        let normalized=st_type.to_ascii_lowercase().replace(' ', "_");
+        let finder_type=match normalized.as_str(){
+            "desert_pyramid"|"desert_temple"=>Some(seedcracker::FinderType::DesertPyramid),
+            "jungle_temple"|"jungle_pyramid"=>Some(seedcracker::FinderType::JungleTemple),
+            "swamp_hut"=>Some(seedcracker::FinderType::SwampHut),"igloo"=>Some(seedcracker::FinderType::Igloo),
+            "village"=>Some(seedcracker::FinderType::Village),"shipwreck"=>Some(seedcracker::FinderType::Shipwreck),
+            "ocean_monument"|"monument"=>Some(seedcracker::FinderType::Monument),
+            "pillager_outpost"|"outpost"=>Some(seedcracker::FinderType::Outpost),
+            "end_city"=>Some(seedcracker::FinderType::EndCity),"trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),_=>None};
+        if finder_type.is_some_and(|kind|!self.finder_pipeline.finder_enabled(kind)){return;}
+        let key=(normalized.clone(),chunk_x,chunk_z);
+        if !self.seen_structures.insert(key){return;}
+        let structure_type=match normalized.as_str(){
+            "desert_pyramid"|"desert_temple"=>Some(seedcracker::StructureType::DesertPyramid),
+            "jungle_temple"|"jungle_pyramid"=>Some(seedcracker::StructureType::JungleTemple),
+            "swamp_hut"=>Some(seedcracker::StructureType::SwampHut),"igloo"=>Some(seedcracker::StructureType::Igloo),
+            "village"=>Some(seedcracker::StructureType::Village),"shipwreck"=>Some(seedcracker::StructureType::Shipwreck),
+            "ocean_monument"|"monument"=>Some(seedcracker::StructureType::OceanMonument),
+            "pillager_outpost"|"outpost"=>Some(seedcracker::StructureType::PillagerOutpost),
+            "end_city"=>Some(seedcracker::StructureType::EndCity),"trial_chambers"=>Some(seedcracker::StructureType::TrialChambers),
+            "ancient_city"=>Some(seedcracker::StructureType::AncientCity),_=>None};
+        if let Some(t)=structure_type {if !self.state.structures.iter().any(|s|s.structure_type==t&&s.chunk_x==chunk_x&&s.chunk_z==chunk_z){self.state.structures.push(seedcracker::StructureInstance::new(t,chunk_x,chunk_z));}}
+        let bx=chunk_x*16;let bz=chunk_z*16;
+        self.add_toast(format!("🏛️ Estructura: {} en Chunk ({}, {})",st_type,chunk_x,chunk_z),0xFFD700);
+        self.session.structures.push(DiscoveredStructure{structure_type:st_type.to_string(),chunk_x,chunk_z,block_x:bx,block_z:bz});
+        let _=self.storage.save(&self.session);
     }
 
     /// Feeds decoded block palettes to the Rust finder engine (structures/decorators/pillars).
