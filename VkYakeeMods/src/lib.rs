@@ -1,4 +1,5 @@
 pub mod api;
+pub mod mod_menu;
 pub mod horizonmatica_adapter;
 pub mod seedcracker_adapter;
 pub mod storage;
@@ -7,6 +8,7 @@ pub mod vkmap_adapter;
 pub mod vlakee_ui_adapter;
 
 pub use api::{ModMetadata, VkMod};
+pub use mod_menu::{MenuAction, MenuPage, ModMenuState, ModuleStatus};
 pub use horizonmatica_adapter::HorizonMaticaMod;
 pub use seedcracker_adapter::SeedCrackerMod;
 pub use storage::StorageManager;
