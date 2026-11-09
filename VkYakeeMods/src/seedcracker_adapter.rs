@@ -37,7 +37,7 @@ pub struct SeedCrackerMod {
     bounding_boxes: Vec<[f32; 10]>,
     toasts: VecDeque<ToastLog>,
     seen_chunks: HashSet<(String, i32, i32)>,
-    solve_tx: Sender<CrackerState>,
+    solve_tx: Sender<(u64, CrackerState)>,
     solve_rx: Receiver<(u64, Vec<i64>)>,
     solving: bool,
     solver_generation: u64,
@@ -54,12 +54,29 @@ impl SeedCrackerMod {
         let (result_tx, solve_rx) = mpsc::channel::<(u64, Vec<i64>)>();
         thread::Builder::new().name("SeedCracker solver".into()).spawn(move || {
             while let Ok((generation, snapshot)) = work_rx.recv() {
-                let seeds = if snapshot.bedrock_blocks.len() >= 20 {
-                    let candidates = HierarchicalBedrockCracker::search(&snapshot.bedrock_blocks, 4, None);
+                // TimeMachine is always executed: it coordinates structures,
+                // pillars, decorators, trees, biome/hash lifting and candidate
+                // Bedrock checks. A large Bedrock sample must never disable it.
+                let mut seeds = TimeMachine::solve(&snapshot).world_seeds;
+
+                // Hierarchical Bedrock is a complementary search, not an
+                // alternative solver. Merge its candidates into the same result.
+                if snapshot.bedrock_blocks.len() >= 30 {
+                    let bedrock_candidates =
+                        HierarchicalBedrockCracker::search(&snapshot.bedrock_blocks, 4, None);
                     if let Some(hash) = snapshot.hashed_seed {
-                        candidates.into_iter().flat_map(|c| HashedSeed::find_world_seeds_from_hash(c, hash)).collect()
-                    } else { candidates.into_iter().map(|c| c as i64).collect() }
-                } else { TimeMachine::solve(&snapshot).world_seeds };
+                        for candidate in bedrock_candidates {
+                            seeds.extend(HashedSeed::find_world_seeds_from_hash(candidate, hash));
+                        }
+                    } else {
+                        // Until a hash is available these remain unconfirmed
+                        // 48-bit candidates; don't discard them.
+                        seeds.extend(bedrock_candidates.into_iter().map(|seed| seed as i64));
+                    }
+                }
+
+                seeds.sort_unstable();
+                seeds.dedup();
                 let _ = result_tx.send((generation, seeds));
             }
         }).expect("SeedCracker solver thread");
@@ -182,18 +199,45 @@ impl SeedCrackerMod {
 
     /// Queue a snapshot; expensive seed searches never run on the game thread.
     pub fn solve(&mut self) {
-        if self.solving { return; }
-        if self.state.bedrock_blocks.len() < 20 && self.state.structures.is_empty()
-            && self.state.pillar_heights.iter().all(Option::is_none) { return; }
-        self.status_message = format!("Analizando {} bloques en worker...", self.state.bedrock_blocks.len());
-        self.solver_generation = self.solver_generation.wrapping_add(1);\n        self.solving = self.solve_tx.send((self.solver_generation, self.state.clone())).is_ok();
+        if self.solving {
+            return;
+        }
+        let has_bedrock = !self.state.bedrock_blocks.is_empty();
+        let has_structures = !self.state.structures.is_empty();
+        let has_pillars = self.state.pillar_heights.iter().any(Option::is_some);
+        let has_other_observations = !self.state.dungeon_floors.is_empty()
+            || !self.state.trees.is_empty()
+            || !self.state.emerald_ores.is_empty()
+            || !self.state.desert_wells.is_empty()
+            || !self.state.biome_samples.is_empty();
+        if !(has_bedrock || has_structures || has_pillars || has_other_observations) {
+            return;
+        }
+
+        self.status_message = format!(
+            "Coordinando cracking: {} bloques Bedrock + estructuras/pistas...",
+            self.state.bedrock_blocks.len()
+        );
+        self.solver_generation = self.solver_generation.wrapping_add(1);
+        self.solving = self
+            .solve_tx
+            .send((self.solver_generation, self.state.clone()))
+            .is_ok();
     }
 
     fn poll_solver(&mut self) {
-        while let Ok(candidates) = self.solve_rx.try_recv() {
+        while let Ok((generation, candidates)) = self.solve_rx.try_recv() {
+            // Ignore results from a reset or a superseded solve request.
+            if generation != self.solver_generation {
+                continue;
+            }
             self.solving = false;
-            if candidates.is_empty() { self.status_message = "Análisis terminado: sin candidatos".into(); continue; }
-            let candidates_u64: Vec<u64> = candidates.iter().map(|&s| s as u64).collect();
+            if candidates.is_empty() {
+                self.status_message = "Análisis terminado: sin candidatos".into();
+                continue;
+            }
+            let candidates_u64: Vec<u64> =
+                candidates.iter().map(|&seed| seed as u64).collect();
             if let Some(&seed) = candidates.first() {
                 self.cracked_seed = Some(seed);
                 self.session.cracked_seed = Some(seed);
