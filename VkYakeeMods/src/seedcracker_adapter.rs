@@ -11,6 +11,8 @@ use seedcracker::structures::TreasureDatabase;
 use seedcracker::timemachine::{CrackerState, TimeMachine};
 
 use std::collections::{HashSet, VecDeque};
+use std::sync::mpsc::{self, Receiver, Sender};
+use std::thread;
 use std::time::Instant;
 
 #[derive(Clone, Debug)]
@@ -34,7 +36,10 @@ pub struct SeedCrackerMod {
     status_message: String,
     bounding_boxes: Vec<[f32; 10]>,
     toasts: VecDeque<ToastLog>,
-    seen_chunks: HashSet<(i32, i32)>,
+    seen_chunks: HashSet<(String, i32, i32)>,
+    solve_tx: Sender<CrackerState>,
+    solve_rx: Receiver<Vec<i64>>,
+    solving: bool,
     seen_biomes: HashSet<(i32, i32)>,
     seen_structures: HashSet<(i32, i32)>,
 }
@@ -43,6 +48,20 @@ impl SeedCrackerMod {
     pub fn new() -> Self {
         let storage = StorageManager::new();
         let session = storage.load_or_create("default_session");
+
+        let (solve_tx, work_rx) = mpsc::channel::<CrackerState>();
+        let (result_tx, solve_rx) = mpsc::channel::<Vec<i64>>();
+        thread::Builder::new().name("SeedCracker solver".into()).spawn(move || {
+            while let Ok(snapshot) = work_rx.recv() {
+                let seeds = if snapshot.bedrock_blocks.len() >= 20 {
+                    let candidates = HierarchicalBedrockCracker::search(&snapshot.bedrock_blocks, 4, None);
+                    if let Some(hash) = snapshot.hashed_seed {
+                        candidates.into_iter().flat_map(|c| HashedSeed::find_world_seeds_from_hash(c, hash)).collect()
+                    } else { candidates.into_iter().map(|c| c as i64).collect() }
+                } else { TimeMachine::solve(&snapshot).world_seeds };
+                let _ = result_tx.send(seeds);
+            }
+        }).expect("SeedCracker solver thread");
 
         Self {
             state: CrackerState::new(),
@@ -59,6 +78,9 @@ impl SeedCrackerMod {
             bounding_boxes: Vec::new(),
             toasts: VecDeque::new(),
             seen_chunks: HashSet::new(),
+            solve_tx,
+            solve_rx,
+            solving: false,
             seen_biomes: HashSet::new(),
             seen_structures: HashSet::new(),
         }
@@ -142,6 +164,7 @@ impl SeedCrackerMod {
         self.cracked_seed = None;
         self.bounding_boxes.clear();
         self.seen_chunks.clear();
+        self.solving = false;
         self.seen_biomes.clear();
         self.seen_structures.clear();
         self.session.cracked_seed = None;
@@ -154,55 +177,32 @@ impl SeedCrackerMod {
         self.add_toast("⚠️ REINICIO TOTAL: Todo reseteado desde cero", 0xFF5555);
     }
 
+    /// Queue a snapshot; expensive seed searches never run on the game thread.
     pub fn solve(&mut self) {
-        if self.state.bedrock_blocks.len() >= 20 {
-            self.add_toast(format!("⚙️ Resolviendo reticulo con {} bloques...", self.state.bedrock_blocks.len()), 0xFFFF55);
-            self.status_message = format!("Buscando semilla en {} bloques de Bedrock...", self.state.bedrock_blocks.len());
+        if self.solving { return; }
+        if self.state.bedrock_blocks.len() < 20 && self.state.structures.is_empty()
+            && self.state.pillar_heights.iter().all(Option::is_none) { return; }
+        self.status_message = format!("Analizando {} bloques en worker...", self.state.bedrock_blocks.len());
+        self.solving = self.solve_tx.send(self.state.clone()).is_ok();
+    }
 
-            let candidates = HierarchicalBedrockCracker::search(&self.state.bedrock_blocks, 4, None);
-            if !candidates.is_empty() {
-                if let Some(hseed) = self.state.hashed_seed {
-                    let mut found_all = Vec::new();
-                    for &c in &candidates {
-                        let world_seeds = HashedSeed::find_world_seeds_from_hash(c, hseed);
-                        found_all.extend(world_seeds);
-                    }
-                    if let Some(&first) = found_all.first() {
-                        self.cracked_seed = Some(first);
-                        self.session.cracked_seed = Some(first);
-                        let _ = self.storage.save(&self.session);
-                        let success_msg = format!("⭐ ¡SEMILLA DESCIFRADA! -> {}", first);
-                        self.status_message = success_msg.clone();
-                        self.add_toast(success_msg, 0x00FF00);
-                        log::info!("SeedCracker: ¡Semilla de mundo encontrada! {}", first);
-                        let cand_u64: Vec<u64> = found_all.iter().map(|&s| s as u64).collect();
-                        crate::broadcast_seed_candidates(&cand_u64);
-                        self.verifier.set_candidates(cand_u64);
-                        return;
-                    }
-                } else if let Some(&first) = candidates.first() {
-                    self.cracked_seed = Some(first as i64);
-                    self.status_message = format!("Candidato Bedrock -> 0x{:012X}", first);
-                    self.add_toast(format!("🔑 Candidato 48-bit: 0x{:012X}", first), 0xFFFF00);
-                    crate::broadcast_seed_candidates(&candidates);
-                    self.verifier.set_candidates(candidates);
-                }
-            }
-        } else {
-            let res = TimeMachine::solve(&self.state);
-            if let Some(&ws) = res.world_seeds.first() {
-                self.cracked_seed = Some(ws);
-                self.session.cracked_seed = Some(ws);
+    fn poll_solver(&mut self) {
+        while let Ok(candidates) = self.solve_rx.try_recv() {
+            self.solving = false;
+            if candidates.is_empty() { self.status_message = "Análisis terminado: sin candidatos".into(); continue; }
+            let candidates_u64: Vec<u64> = candidates.iter().map(|&s| s as u64).collect();
+            if let Some(&seed) = candidates.first() {
+                self.cracked_seed = Some(seed);
+                self.session.cracked_seed = Some(seed);
                 let _ = self.storage.save(&self.session);
-                let success_msg = format!("⭐ ¡Semilla encontrada! -> {}", ws);
-                self.status_message = success_msg.clone();
-                self.add_toast(success_msg, 0x00FF00);
-                let cand_u64: Vec<u64> = res.world_seeds.iter().map(|&s| s as u64).collect();
-                crate::broadcast_seed_candidates(&cand_u64);
-                self.verifier.set_candidates(cand_u64);
+                self.status_message = format!("⭐ Semilla/candidato encontrado: {seed}");
+                self.add_toast(self.status_message.clone(), 0x00FF00);
             }
+            crate::broadcast_seed_candidates(&candidates_u64);
+            self.verifier.set_candidates(candidates_u64);
         }
     }
+
 }
 
 impl VkMod for SeedCrackerMod {
@@ -229,6 +229,8 @@ impl VkMod for SeedCrackerMod {
         self.status_message = format!("Hashed Seed: 0x{:016X}", hashed_seed);
     }
 
+    fn on_tick(&mut self) { self.poll_solver(); }
+
     fn on_chunk_loaded(
         &mut self,
         cx: i32,
@@ -240,6 +242,8 @@ impl VkMod for SeedCrackerMod {
             return;
         }
 
+        let chunk_key = (dimension.to_owned(), cx, cz);
+        if !self.seen_chunks.insert(chunk_key) { return; }
         self.session.total_scanned_chunks += 1;
 
         if let Some(mask) = bedrock_mask {
@@ -259,7 +263,7 @@ impl VkMod for SeedCrackerMod {
                 }
             }
 
-            if count > 0 && self.seen_chunks.insert((cx, cz)) {
+            if count > 0 {
                 let hex_mask: String = mask.iter().map(|b| if *b != 0 { '1' } else { '0' }).collect();
                 self.session.bedrock_chunks.insert(format!("{},{}", cx, cz), hex_mask);
                 let _ = self.storage.save(&self.session);
