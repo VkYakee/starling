@@ -82,7 +82,7 @@ impl FinderPipeline {
         match job.kind {
             FinderKind::Bedrock=>output=BedrockAnalyzer.analyze(job.chunk_x,job.chunk_z,&job.bedrock),
             FinderKind::Structure=>output=StructureAnalyzer::default().analyze(job.chunk_x,job.chunk_z,&job.bedrock),
-            FinderKind::Combined=>{output=BedrockAnalyzer::analyze(job.chunk_x,job.chunk_z,&job.bedrock);if self.control.is_current(job.generation){output.structures.extend(StructureAnalyzer::analyze(job.chunk_x,job.chunk_z,&job.bedrock).structures);}}
+            FinderKind::Combined=>{output=BedrockAnalyzer.analyze(job.chunk_x,job.chunk_z,&job.bedrock);if self.control.is_current(job.generation){output.structures.extend(StructureAnalyzer::default().analyze(job.chunk_x,job.chunk_z,&job.bedrock).structures);}}
         }
         if !self.control.is_current(job.generation){self.queue.mark_cancelled();return None;}
         self.queue.mark_completed();Some((queued.sequence,output))
