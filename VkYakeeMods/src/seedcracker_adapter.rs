@@ -41,6 +41,7 @@ pub struct SeedCrackerMod {
     solve_tx: Sender<(u64, CrackerState)>,
     solve_rx: Receiver<(u64, Vec<i64>)>,
     solving: bool,
+    solve_requested: bool,
     solver_generation: u64,
     seen_biomes: HashSet<(i32, i32)>,
     seen_structures: HashSet<(String, i32, i32)>,
@@ -101,6 +102,7 @@ impl SeedCrackerMod {
             solve_tx,
             solve_rx,
             solving: false,
+            solve_requested: false,
             solver_generation: 0,
             seen_biomes: HashSet::new(),
             seen_structures: HashSet::new(),
@@ -244,6 +246,7 @@ impl SeedCrackerMod {
         self.seen_chunks.clear();
         self.solver_generation = self.solver_generation.wrapping_add(1);
         self.solving = false;
+        self.solve_requested = false;
         self.seen_biomes.clear();
         self.seen_structures.clear();
         self.session.cracked_seed = None;
@@ -258,9 +261,7 @@ impl SeedCrackerMod {
 
     /// Queue a snapshot; expensive seed searches never run on the game thread.
     pub fn solve(&mut self) {
-        if self.solving {
-            return;
-        }
+        if self.solving { self.solve_requested=true; return; }
         let has_bedrock = !self.state.bedrock_blocks.is_empty();
         let has_structures = !self.state.structures.is_empty();
         let has_pillars = self.state.pillar_heights.iter().any(Option::is_some);
@@ -307,6 +308,8 @@ impl SeedCrackerMod {
                 continue;
             }
             self.solving = false;
+            let rerun=self.solve_requested; self.solve_requested=false;
+            if rerun { self.solve(); }
             if candidates.is_empty() {
                 self.status_message = "Análisis terminado: sin candidatos".into();
                 continue;
