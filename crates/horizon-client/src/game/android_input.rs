@@ -97,6 +97,19 @@ impl Game<'_> {
                         vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::OpenSeedCracker);
                         return true;
                     }
+                } else if menu.page == vkyakee_mods::MenuPage::SeedFinders {
+                    if point[0] >= mx + 8.0 && point[0] <= mx + 54.0 && point[1] >= my + 3.0 && point[1] <= my + 22.0 {
+                        vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::Back);
+                        return true;
+                    }
+                    if point[1] >= my + 39.0 && point[1] <= my + 147.0 {
+                        let index=((point[1]-(my+39.0))/12.0) as usize;
+                        let sc=vkyakee_mods::seedcracker_hud_snapshot();
+                        if let Some((name,enabled))=sc.finders.get(index) {
+                            vkyakee_mods::seedcracker_hud_action(&format!("sc finder {} {}",name,if *enabled {"off"} else {"on"}));
+                        }
+                        return true;
+                    }
                 } else {
                     if point[0] >= mx + 8.0 && point[0] <= mx + 54.0 && point[1] >= my + 3.0 && point[1] <= my + 22.0 {
                         vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::Back);
@@ -114,7 +127,7 @@ impl Game<'_> {
                         if point[0] >= mx + 8.0 && point[0] <= mx + 88.0 {
                             vkyakee_mods::seedcracker_hud_action("sc esp");
                         } else if point[0] >= mx + 94.0 && point[0] <= mx + 174.0 {
-                            vkyakee_mods::seedcracker_hud_action("sc finder reload");
+                            vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::OpenFinders);
                         }
                         return true;
                     }
