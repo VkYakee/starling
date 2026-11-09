@@ -112,7 +112,8 @@
              MenuAction::Close => self.open = false,
              MenuAction::Back => self.page = MenuPage::Home,
              MenuAction::ToggleHud => self.visible = !self.visible,
-             MenuAction::OpenFinders => { self.open = true; self.page = MenuPage::SeedFinders; },
+             MenuAction::OpenFinders => { self.open = true; self.page = MenuPage::SeedFinders; self.finder_page = 0; },
+            MenuAction::NextFinderPage => self.finder_page = (self.finder_page + 1) % 2,
          }
      }
 
