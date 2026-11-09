@@ -271,7 +271,9 @@ impl SeedCrackerMod {
                 self.state.pillar_heights[idx]=None;
             }
         }
-        let batch=BlockUpdateBatch{updates:updates.clone(),removed};\n        self.finder_pipeline.apply_block_updates(batch.clone());\n        let _=self.finder_control_tx.send(FinderWorkerCommand::Updates(batch));
+        let batch=BlockUpdateBatch{updates:updates.clone(),removed};
+        self.finder_pipeline.apply_block_updates(batch.clone());
+        let _=self.finder_control_tx.send(FinderWorkerCommand::Updates(batch));
         if self.collecting && !updates.is_empty() {self.on_block_snapshot(&updates);}
     }
     /// Rebuild detector caches when dimension, version, or collection settings change.
