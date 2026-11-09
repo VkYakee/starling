@@ -55,7 +55,7 @@ pub struct SeedCrackerMod {
 enum FinderWorkerCommand {
     Updates(BlockUpdateBatch),
     Reload,
-    SetEnabled(FinderKind, bool),
+    SetEnabled(seedcracker::finders::FinderType, bool),
     Pause,
     Resume,
 }
