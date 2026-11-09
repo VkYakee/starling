@@ -12,7 +12,7 @@ pub mod timemachine;
 pub mod trees;
 
 pub use assets_manager::{AssetManager, ASSET_MANAGER, tr};
-pub use finders::{FinderPipeline, FinderBuilder, FinderJob, FinderKind, FinderControl, FinderStatus, FinderQueue, FinderQueueStats, BlockObservation, BlockUpdateBatch, FinderObservations, PatternDetector, PatternHit, PatternKind, FinderCategory, FinderType, BlockFinder, FinderRegistry};
+pub use finders::{FinderPipeline, FinderBuilder, FinderJob, FinderKind, FinderControl, FinderStatus, FinderQueue, FinderQueueStats, QueuedFinder, BlockObservation, BlockUpdateBatch, FinderObservations, PatternDetector, PatternHit, PatternKind, FinderCategory, FinderType, BlockFinder, FinderRegistry};
 pub use bedrock::{BedrockBlock, BedrockSolver, BlockType, HierarchicalBedrockCracker};
 pub use biomes::{BiomeGenerator, BiomeLifter, BiomeSample, MC_1_18, MC_1_20, MC_1_21};
 pub use decorators::{DecoratorType, DesertWellData, EmeraldOreData};
