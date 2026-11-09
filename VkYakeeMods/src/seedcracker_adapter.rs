@@ -45,6 +45,7 @@ pub struct SeedCrackerMod {
     solver_generation: u64,
     seen_biomes: HashSet<(i32, i32)>,
     seen_structures: HashSet<(String, i32, i32)>,
+    seen_treasures: HashSet<(i32,i32)>,
     finder_pipeline: FinderPipeline,
 }
 
@@ -106,6 +107,7 @@ impl SeedCrackerMod {
             solver_generation: 0,
             seen_biomes: HashSet::new(),
             seen_structures: HashSet::new(),
+            seen_treasures: HashSet::new(),
             finder_pipeline: FinderPipeline::default(),
         }
     }
@@ -193,6 +195,15 @@ impl SeedCrackerMod {
         for s in output.structures { if !self.state.structures.iter().any(|v|v.structure_type==s.structure_type&&v.chunk_x==s.chunk_x&&v.chunk_z==s.chunk_z){self.state.structures.push(s);} }
         for hit in output.observations.patterns {
             match hit.kind {
+                PatternKind::BuriedTreasure => {
+                    let chunk=(hit.x.div_euclid(16),hit.z.div_euclid(16));
+                    if self.seen_treasures.insert(chunk) {
+                        let observed:Vec<(i32,i32)>=self.seen_treasures.iter().copied().collect();
+                        for formation in &self.treasure_db.formations {
+                            if formation.matches(&observed) {for &seed in &formation.seeds {if !self.state.candidate_seeds.contains(&seed){self.state.candidate_seeds.push(seed);}}}
+                        }
+                    }
+                },
                 PatternKind::EmeraldOre => { let data=seedcracker::EmeraldOreData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.y,hit.z);if !self.state.emerald_ores.iter().any(|e|e.block_x==data.block_x&&e.block_y==data.block_y&&e.block_z==data.block_z){self.state.emerald_ores.push(data);} },
                 PatternKind::DesertWell => {let data=seedcracker::DesertWellData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.z);if !self.state.desert_wells.iter().any(|w|w.block_x==data.block_x&&w.block_z==data.block_z){self.state.desert_wells.push(data);} },
                 PatternKind::Dungeon => {
@@ -249,6 +260,7 @@ impl SeedCrackerMod {
         self.solve_requested = false;
         self.seen_biomes.clear();
         self.seen_structures.clear();
+        self.seen_treasures.clear();
         self.session.cracked_seed = None;
         self.session.bedrock_chunks.clear();
         self.session.biomes.clear();
