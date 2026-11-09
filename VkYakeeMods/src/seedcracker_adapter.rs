@@ -186,6 +186,7 @@ impl SeedCrackerMod {
     /// Feeds decoded block palettes to the Rust finder engine (structures/decorators/pillars).
     pub fn on_block_snapshot(&mut self, blocks: &[BlockObservation]) {
         if !self.active || !self.collecting { return; }
+        let snapshot=blocks.to_vec();
         let output=self.finder_pipeline.scan_blocks(blocks);
         for s in output.structures { if !self.state.structures.iter().any(|v|v.structure_type==s.structure_type&&v.chunk_x==s.chunk_x&&v.chunk_z==s.chunk_z){self.state.structures.push(s);} }
         for hit in output.observations.patterns {
@@ -207,6 +208,7 @@ impl SeedCrackerMod {
                 }, _=>{}
             }
         }
+        if self.state.structures.len()>=2 || self.state.emerald_ores.len()>=2 || self.state.desert_wells.len()>=2 || self.state.dungeon_floors.len()>=1 || self.state.pillar_heights.iter().filter(|p|p.is_some()).count()>=3 { self.solve(); }
     }
     /// Incremental world block mutation invalidates and replaces detector observations.
     pub fn on_block_updates(&mut self, updates: Vec<BlockObservation>, removed: Vec<(i32,i32,i32)>) {
@@ -292,8 +294,9 @@ impl SeedCrackerMod {
                 }
             }
             for structure in output.structures {
-                self.state.structures.push(structure);
+                if !self.state.structures.iter().any(|s|s.structure_type==structure.structure_type&&s.chunk_x==structure.chunk_x&&s.chunk_z==structure.chunk_z){self.state.structures.push(structure);}
             }
+            if self.state.bedrock_blocks.len()>=30 && !self.solving {self.solve();}
         }
     }
 
