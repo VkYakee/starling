@@ -422,6 +422,24 @@ impl VkMod for SeedCrackerMod {
                 "reset" | "reset_all" | "clear" => {
                     self.reset_all();
                 }
+                "finder" => {
+                    let name=parts.get(2).copied().unwrap_or("reload");
+                    if name=="reload"||name=="reset" { self.reload_finders(); }
+                    else {
+                        let kind=match name {
+                            "treasure"|"buried_treasure"=>Some(seedcracker::FinderType::BuriedTreasure),
+                            "desert_pyramid"|"desert_temple"=>Some(seedcracker::FinderType::DesertPyramid),
+                            "jungle_temple"=>Some(seedcracker::FinderType::JungleTemple),"swamp_hut"=>Some(seedcracker::FinderType::SwampHut),
+                            "igloo"=>Some(seedcracker::FinderType::Igloo),"village"=>Some(seedcracker::FinderType::Biome),
+                            "shipwreck"=>Some(seedcracker::FinderType::Shipwreck),"monument"=>Some(seedcracker::FinderType::Monument),
+                            "outpost"=>Some(seedcracker::FinderType::Outpost),"end_city"=>Some(seedcracker::FinderType::EndCity),
+                            "trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),"end_pillars"=>Some(seedcracker::FinderType::EndPillars),
+                            "end_gateway"=>Some(seedcracker::FinderType::EndGateway),"dungeon"=>Some(seedcracker::FinderType::Dungeon),
+                            "emerald_ore"=>Some(seedcracker::FinderType::EmeraldOre),"desert_well"=>Some(seedcracker::FinderType::DesertWell),
+                            "warped_fungus"=>Some(seedcracker::FinderType::WarpedFungus),_=>None};
+                        if let Some(kind)=kind {let enabled=parts.get(3).copied().unwrap_or("on")!="off";self.finder_pipeline.set_finder_enabled(kind,enabled);self.add_toast(format!("Finder {} {}",name,if enabled{"activado"}else{"desactivado"}),0x00FF88);}
+                    }
+                }
                 "solve" => {
                     self.solve();
                 }
