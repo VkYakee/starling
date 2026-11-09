@@ -137,7 +137,7 @@ impl Game<'_> {
             batch.text(atlas, "< BACK", mx + 10.0, my + 7.0, rgba(244, 66, 82, 255), true);
             batch.text(atlas, "FINDER CONFIG", mx + 62.0, my + 7.0, rgba(242, 246, 244, 255), true);
             batch.text(atlas, "Tap row to enable / disable", mx + 10.0, my + 24.0, rgba(154, 166, 162, 255), false);
-            for (i in 0..9 {
+            for i in 0..9 {
                 if let Some((name, enabled)) = sc.finders.get(i) {
                     let y = my + 39.0 + i as f32 * 12.0;
                     batch.fill(atlas, mx + 8.0, y, mw - 16.0, 11.0, rgba(18, 22, 24, 190));
