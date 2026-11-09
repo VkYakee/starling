@@ -170,6 +170,13 @@ pub fn on_chunk_loaded(cx: i32, cz: i32, dimension: &str, bedrock_mask: Option<&
     }
 }
 
+pub fn on_block_snapshot(cx:i32,cz:i32,dimension:&str,blocks:&[(i32,i32,i32,String)]) {
+    if let Ok(mut h)=hub().lock(){for m in &mut h.mods{m.on_block_snapshot(cx,cz,dimension,blocks);}}
+}
+pub fn on_block_update(x:i32,y:i32,z:i32,block:Option<&str>) {
+    if let Ok(mut h)=hub().lock(){for m in &mut h.mods{m.on_block_update(x,y,z,block);}}
+}
+
 pub fn on_biome_found(x: i32, z: i32, biome_id: i32, name: &str) {
     if let Ok(mut h) = hub().lock() {
         for m in &mut h.mods {
