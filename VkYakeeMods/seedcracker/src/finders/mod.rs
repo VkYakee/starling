@@ -42,7 +42,7 @@ impl FinderPipeline {
             PatternKind::Outpost=>FinderType::Outpost,
             PatternKind::EndCity=>FinderType::EndCity,
             PatternKind::TrialChambers=>FinderType::TrialChambers,
-            PatternKind::AncientCity=>FinderType::Monument,
+            PatternKind::AncientCity=>FinderType::AncientCity,
             PatternKind::Dungeon=>FinderType::Dungeon,
             PatternKind::DesertWell=>FinderType::DesertWell,
             PatternKind::EmeraldOre=>FinderType::EmeraldOre,
