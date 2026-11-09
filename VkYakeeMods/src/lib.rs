@@ -8,7 +8,7 @@ pub mod vkmap_adapter;
 pub mod vlakee_ui_adapter;
 
 pub use api::{ModMetadata, VkMod};
-pub use mod_menu::{MenuAction, MenuPage, ModMenuState, ModuleStatus};
+pub use mod_menu::{FloatingButtonTheme, MenuAction, MenuPage, MenuTheme, ModMenuState, ModuleStatus};
 pub use horizonmatica_adapter::HorizonMaticaMod;
 pub use seedcracker_adapter::SeedCrackerMod;
 pub use storage::StorageManager;
