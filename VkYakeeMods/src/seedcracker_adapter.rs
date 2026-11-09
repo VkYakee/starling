@@ -40,6 +40,7 @@ pub struct SeedCrackerMod {
     solve_tx: Sender<CrackerState>,
     solve_rx: Receiver<Vec<i64>>,
     solving: bool,
+    solver_generation: u64,
     seen_biomes: HashSet<(i32, i32)>,
     seen_structures: HashSet<(i32, i32)>,
 }
@@ -81,6 +82,7 @@ impl SeedCrackerMod {
             solve_tx,
             solve_rx,
             solving: false,
+            solver_generation: 0,
             seen_biomes: HashSet::new(),
             seen_structures: HashSet::new(),
         }
@@ -164,6 +166,7 @@ impl SeedCrackerMod {
         self.cracked_seed = None;
         self.bounding_boxes.clear();
         self.seen_chunks.clear();
+        self.solver_generation = self.solver_generation.wrapping_add(1);
         self.solving = false;
         self.seen_biomes.clear();
         self.seen_structures.clear();
