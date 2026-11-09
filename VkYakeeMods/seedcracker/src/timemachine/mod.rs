@@ -1,5 +1,7 @@
 pub mod worker;
+pub mod routes;
 pub use worker::SolverWorker;
+pub use routes::{search_structure_seeds, deep_biome_world_search, validate_world_seeds, StructureSearchBatch, StructureSearchCursor, DEFAULT_SEARCH_BUDGET, STRUCTURE_SEARCH_SPACE};
 
 use std::collections::HashSet;
 use std::sync::{
@@ -51,12 +53,14 @@ pub struct CrackerState {
     pub target_mc_version: i32,
     pub structure_candidates: Vec<StructureSeed48>,
     pub tree_candidate_limit: usize,
+    pub structure_search_cursor: StructureSearchCursor,
+    pub structure_search_budget: u64,
 }
 impl Default for CrackerState {
     fn default() -> Self { Self { target_mc_version: MC_1_20, tree_candidate_limit: 10_000, ..Self::empty() } }
 }
 impl CrackerState {
-    fn empty() -> Self { Self { bedrock_blocks: Vec::new(), candidate_seeds: Vec::new(), dungeon_floors: Vec::new(), pillar_heights: [None; PILLAR_COUNT], structures: Vec::new(), trees: Vec::new(), emerald_ores: Vec::new(), desert_wells: Vec::new(), biome_samples: Vec::new(), hashed_seed: None, target_mc_version: MC_1_20, structure_candidates: Vec::new(), tree_candidate_limit: 10_000 } }
+    fn empty() -> Self { Self { bedrock_blocks: Vec::new(), candidate_seeds: Vec::new(), dungeon_floors: Vec::new(), pillar_heights: [None; PILLAR_COUNT], structures: Vec::new(), trees: Vec::new(), emerald_ores: Vec::new(), desert_wells: Vec::new(), biome_samples: Vec::new(), hashed_seed: None, target_mc_version: MC_1_20, structure_candidates: Vec::new(), tree_candidate_limit: 10_000, structure_search_cursor: StructureSearchCursor::default(), structure_search_budget: DEFAULT_SEARCH_BUDGET } }
     pub fn new() -> Self {
         Self::default()
     }
@@ -109,6 +113,12 @@ impl TimeMachine {
         }
 
         let mut structures: HashSet<StructureSeed48> = input.structure_candidates.iter().copied().collect();
+        // SeedCrackerX exhaustive pillar route: bounded work, resumable cursor, no false completion.
+        let structure_batch = search_structure_seeds(
+            &out.pillar_seeds, &input.structures, input.structure_search_cursor,
+            input.structure_search_budget, cancel.as_ref(),
+        );
+        structures.extend(structure_batch.seeds.into_iter().map(StructureSeed48::new));
         if input.structures.len() >= 2 {
             structures.extend(StructureLifter::lift_structures_range(
                 &input.structures, 0, 1_u64 << 29, cancel.as_ref(),
