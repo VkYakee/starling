@@ -153,6 +153,7 @@ impl SeedCrackerMod {
                 name: name.to_string(),
             });
             let _ = self.storage.save(&self.session);
+            if self.state.structures.len()>=1 && (self.state.biome_samples.len()>=3 || self.state.hashed_seed.is_some()) {self.solve();}
         }
     }
 
@@ -185,6 +186,7 @@ impl SeedCrackerMod {
         self.add_toast(format!("🏛️ Estructura: {} en Chunk ({}, {})",st_type,chunk_x,chunk_z),0xFFD700);
         self.session.structures.push(DiscoveredStructure{structure_type:st_type.to_string(),chunk_x,chunk_z,block_x:bx,block_z:bz});
         let _=self.storage.save(&self.session);
+        if self.state.structures.len()>=2 {self.solve();}
     }
 
     /// Feeds decoded block palettes to the Rust finder engine (structures/decorators/pillars).
