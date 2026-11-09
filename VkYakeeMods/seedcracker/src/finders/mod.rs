@@ -36,7 +36,7 @@ impl FinderPipeline {
             PatternKind::JungleTemple=>FinderType::JungleTemple,
             PatternKind::SwampHut=>FinderType::SwampHut,
             PatternKind::Igloo=>FinderType::Igloo,
-            PatternKind::Village=>FinderType::Biome,
+            PatternKind::Village=>FinderType::Village,
             PatternKind::Shipwreck=>FinderType::Shipwreck,
             PatternKind::Monument=>FinderType::Monument,
             PatternKind::Outpost=>FinderType::Outpost,
@@ -70,7 +70,7 @@ impl FinderPipeline {
         }
         AnalyzerOutput{structures,observations,..Default::default()}
     }
-    pub fn apply_block_updates(&self,batch:BlockUpdateBatch){self.detector.lock().unwrap_or_else(|e|e.into_inner()).apply_updates(batch);}
+    pub fn finder_enabled(&self,kind:FinderType)->bool{self.registry.lock().unwrap_or_else(|e|e.into_inner()).enabled(kind)}\n    pub fn apply_block_updates(&self,batch:BlockUpdateBatch){self.detector.lock().unwrap_or_else(|e|e.into_inner()).apply_updates(batch);}
     pub fn set_finder_enabled(&self,kind:FinderType,enabled:bool){self.registry.lock().unwrap_or_else(|e|e.into_inner()).set_enabled(kind,enabled);self.reset_finders();}
     pub fn reload_finders(&self){self.registry.lock().unwrap_or_else(|e|e.into_inner()).reload();self.reset_finders();}
     pub fn reset_finders(&self){self.control.cancel_all();self.queue.clear();self.detector.lock().unwrap_or_else(|e|e.into_inner()).reset();}
