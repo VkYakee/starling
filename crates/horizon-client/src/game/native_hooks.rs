@@ -1148,7 +1148,11 @@ impl Game<'_> {
     pub(super) fn native_tick(&mut self) {
         vkyakee_mods::on_tick();
         if let Some(p) = self.player.as_ref() {
-            let feet = [p.position.x.floor() as i32, p.position.y.floor() as i32, p.position.z.floor() as i32];
+            let feet = [
+                p.position.x.floor() as i32,
+                p.position.y.floor() as i32,
+                p.position.z.floor() as i32,
+            ];
             vkyakee_mods::on_player_pos(feet[0], feet[1], feet[2]);
             if let Some(chunk) = self.world.chunks.get(&(feet[0] >> 4, feet[2] >> 4)) {
                 let biome_id = chunk.biome(feet[0], feet[1], feet[2]) as usize;
@@ -1455,7 +1459,7 @@ impl Game<'_> {
         for m in vkyakee_mods::get_mod_list() {
             mods.push(NativeMod {
                 id: m.id.to_string(),
-                title: format!("{} {}", m.name, m.version),
+                title: [m.name, " ", m.version].concat(),
                 description: m.description.to_string(),
                 keys: Vec::new(),
             });

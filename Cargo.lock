@@ -1685,6 +1685,7 @@ dependencies = [
  "symphonia",
  "ureq",
  "url",
+ "vkyakee-mods",
  "wgpu",
  "winit",
  "zip 2.6.1",
