@@ -146,7 +146,7 @@ impl Game<'_> {
                     batch.text(atlas, if *enabled { "ON" } else { "OFF" }, mx + 151.0, y + 2.0, if *enabled { rgba(52, 214, 112, 255) } else { rgba(244, 66, 82, 255) }, true);
                 }
             }
-            batch.text(atlas, "1-9 / 19 finders", mx + 10.0, my + 151.0, rgba(154, 166, 162, 255), false);
+            batch.text(atlas, if state.finder_page == 0 { "1-10 / 19  > NEXT" } else { "< PREV  11-19 / 19" }, mx + 10.0, my + 151.0, rgba(154, 166, 162, 255), false);
         } else {
             let sc = vkyakee_mods::seedcracker_hud_snapshot();
             batch.text(atlas, "< BACK", mx + 10.0, my + 7.0, rgba(244, 66, 82, 255), true);
