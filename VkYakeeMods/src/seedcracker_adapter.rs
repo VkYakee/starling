@@ -339,7 +339,7 @@ impl SeedCrackerMod {
                 self.status_message = format!("⭐ Semilla/candidato encontrado: {seed}");
                 self.add_toast(self.status_message.clone(), 0x00FF00);
             }
-            crate::broadcast_seed_candidates(&candidates_u64);
+            crate::publish_seed_candidates(&candidates_u64);
             self.verifier.set_candidates(candidates_u64);
         }
     }
