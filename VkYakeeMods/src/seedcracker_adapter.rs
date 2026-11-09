@@ -52,6 +52,14 @@ pub struct SeedCrackerMod {
     block_scan_rx: Receiver<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>,
 }
 
+enum FinderWorkerCommand {
+    Updates(BlockUpdateBatch),
+    Reload,
+    SetEnabled(FinderKind, bool),
+    Pause,
+    Resume,
+}
+
 impl SeedCrackerMod {
     pub fn new() -> Self {
         let storage = StorageManager::new();
@@ -61,9 +69,19 @@ impl SeedCrackerMod {
         let (result_tx, solve_rx) = mpsc::channel::<(u64, Vec<i64>)>();
         let (block_scan_tx, scan_rx) = mpsc::sync_channel::<(i32,i32,String,Vec<BlockObservation>)>(32);
         let (scan_result_tx, block_scan_rx) = mpsc::sync_channel::<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>(32);
+        let (finder_control_tx, finder_control_rx) = mpsc::channel::<FinderWorkerCommand>();
         thread::Builder::new().name("SeedCracker finders".into()).spawn(move || {
-            let pipeline=FinderPipeline::default();
+            let mut pipeline=FinderPipeline::default();
             while let Ok((cx,cz,dimension,blocks))=scan_rx.recv() {
+                while let Ok(command)=finder_control_rx.try_recv() {
+                    match command {
+                        FinderWorkerCommand::Updates(batch)=>pipeline.apply_block_updates(batch),
+                        FinderWorkerCommand::Reload=>pipeline.reload_finders(),
+                        FinderWorkerCommand::SetEnabled(kind,enabled)=>pipeline.set_finder_enabled(kind,enabled),
+                        FinderWorkerCommand::Pause=>pipeline.pause(),
+                        FinderWorkerCommand::Resume=>pipeline.resume(),
+                    }
+                }
                 let output=pipeline.scan_blocks(&blocks);
                 if scan_result_tx.send((cx,cz,dimension,blocks,output)).is_err(){break;}
             }
