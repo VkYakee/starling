@@ -25,10 +25,10 @@ pub struct FinderObservations {
 #[derive(Debug,Clone,Copy,PartialEq,Eq,Hash)]
 pub enum FinderCategory { Structures, Decorators, Biomes, Blocks }
 #[derive(Debug,Clone,Copy,PartialEq,Eq,Hash)]
-pub enum FinderType { BuriedTreasure,DesertPyramid,EndCity,JungleTemple,Monument,SwampHut,Shipwreck,Outpost,Igloo,Village,TrialChambers,EndPillars,EndGateway,Dungeon,EmeraldOre,DesertWell,WarpedFungus,Biome }
+pub enum FinderType { BuriedTreasure,DesertPyramid,EndCity,JungleTemple,Monument,SwampHut,Shipwreck,Outpost,Igloo,Village,TrialChambers,AncientCity,EndPillars,EndGateway,Dungeon,EmeraldOre,DesertWell,WarpedFungus,Biome }
 impl FinderType {
  pub fn category(self)->FinderCategory {match self {
-  Self::BuriedTreasure|Self::DesertPyramid|Self::EndCity|Self::JungleTemple|Self::Monument|Self::SwampHut|Self::Shipwreck|Self::Outpost|Self::Igloo|Self::Village|Self::TrialChambers=>FinderCategory::Structures,
+  Self::BuriedTreasure|Self::DesertPyramid|Self::EndCity|Self::JungleTemple|Self::Monument|Self::SwampHut|Self::Shipwreck|Self::Outpost|Self::Igloo|Self::Village|Self::TrialChambers|Self::AncientCity=>FinderCategory::Structures,
   Self::EndPillars|Self::EndGateway|Self::Dungeon|Self::EmeraldOre|Self::DesertWell|Self::WarpedFungus=>FinderCategory::Decorators,Self::Biome=>FinderCategory::Biomes}}
 }
 #[derive(Debug,Clone)]
@@ -40,7 +40,7 @@ impl BlockFinder {
 #[derive(Debug,Clone)]
 pub struct FinderRegistry { enabled:HashSet<FinderType>, generation:u64 }
 impl Default for FinderRegistry {
- fn default()->Self{Self{enabled:HashSet::from([FinderType::BuriedTreasure,FinderType::DesertPyramid,FinderType::EndCity,FinderType::JungleTemple,FinderType::Monument,FinderType::SwampHut,FinderType::Shipwreck,FinderType::Outpost,FinderType::Igloo,FinderType::Village,FinderType::TrialChambers,FinderType::EndPillars,FinderType::EndGateway,FinderType::Dungeon,FinderType::EmeraldOre,FinderType::DesertWell,FinderType::WarpedFungus,FinderType::Biome]),generation:1}}
+ fn default()->Self{Self{enabled:HashSet::from([FinderType::BuriedTreasure,FinderType::DesertPyramid,FinderType::EndCity,FinderType::JungleTemple,FinderType::Monument,FinderType::SwampHut,FinderType::Shipwreck,FinderType::Outpost,FinderType::Igloo,FinderType::Village,FinderType::TrialChambers,FinderType::AncientCity,FinderType::EndPillars,FinderType::EndGateway,FinderType::Dungeon,FinderType::EmeraldOre,FinderType::DesertWell,FinderType::WarpedFungus,FinderType::Biome]),generation:1}}
 }
 impl FinderRegistry {
  pub fn enabled(&self,kind:FinderType)->bool{self.enabled.contains(&kind)}
