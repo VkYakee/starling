@@ -1,7 +1,7 @@
 use rayon::prelude::*;
 
 use crate::dungeon::floor::{DungeonFloor, DungeonFloorBlock};
-use crate::math::lcg::{JavaRandom, MASK48, MULTIPLIER};
+use crate::math::lcg::{JavaRandom, MASK48, MULTIPLIER, ADDEND};
 
 pub const DUNGEON_SALT_MODERN: u64 = 30002;
 
@@ -14,7 +14,7 @@ impl DungeonSolver {
         let mut cur_seed = seed;
         for &block in pattern {
             // Next seed
-            cur_seed = cur_seed.wrapping_mul(JavaRandom::MULTIPLIER).wrapping_add(JavaRandom::ADDEND) & MASK48;
+            cur_seed = cur_seed.wrapping_mul(MULTIPLIER).wrapping_add(ADDEND) & MASK48;
             // nextInt(4) is top 2 bits of seed (bits 46 and 47)
             let val = ((cur_seed >> 46) & 3) as i32;
             match block {
