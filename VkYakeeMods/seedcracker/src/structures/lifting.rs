@@ -9,8 +9,8 @@ pub struct StructureLifter;
 impl StructureLifter {
     pub fn test_structure(seed: u64, structure: &StructureInstance) -> bool {
         let config = get_structure_config(structure.structure_type);
-        let region_seed = get_region_seed(seed, structure.region_x(), structure.region_z(), config.salt);
-        let mut rand = JavaRandom::new(region_seed as i64);
+        let region_seed = get_region_seed(seed, structure.region_x(), structure.region_z(), config.salt as i32);
+        let mut rand = JavaRandom::new(region_seed);
         if structure.structure_type == StructureType::OceanMonument {
             let offset_x = (rand.next_int_bounded(config.offset()).unwrap_or(0) + rand.next_int_bounded(config.offset()).unwrap_or(0)) / 2;
             let offset_z = (rand.next_int_bounded(config.offset()).unwrap_or(0) + rand.next_int_bounded(config.offset()).unwrap_or(0)) / 2;
@@ -43,8 +43,8 @@ impl StructureLifter {
             if cancel.load(Ordering::Relaxed) { return false; }
             eligible.iter().all(|s| {
                 let c = get_structure_config(s.structure_type);
-                let rs = get_region_seed(v, s.region_x(), s.region_z(), c.salt);
-                let mut r = JavaRandom::new(rs as i64);
+                let rs = get_region_seed(v, s.region_x(), s.region_z(), c.salt as i32);
+                let mut r = JavaRandom::new(rs);
                 r.next_int_bounded(c.offset()).map_or(false, |ox| ox % 4 == s.offset_x() % 4)
                     && r.next_int_bounded(c.offset()).map_or(false, |oz| oz % 4 == s.offset_z() % 4)
             })
