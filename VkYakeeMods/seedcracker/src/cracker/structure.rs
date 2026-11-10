@@ -2,8 +2,8 @@
 //! This guarantees 100% parity by testing candidate seeds against Horizon's
 //! exact `is_structure_chunk` implementation.
 
-use horizon_core::random::{LegacyRandom, WorldgenRandom};
-use horizon_world::worldgen::structure::start::{StructureRegistry, StructureSet, Rings, Placement};
+use horizon_core::random::{LegacyRandom, RandomSource};
+use horizon_world::worldgen::structure::start::{StructureRegistry, StructureSet, Rings};
 use std::sync::atomic::{AtomicBool, Ordering};
 use rayon::prelude::*;
 
