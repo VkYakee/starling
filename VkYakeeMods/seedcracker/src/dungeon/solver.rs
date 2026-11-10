@@ -1,7 +1,6 @@
 use rayon::prelude::*;
 
 use crate::dungeon::floor::{DungeonFloor, DungeonFloorBlock};
-use crate::math::chunk_rand;
 use crate::math::lcg::{JavaRandom, MASK48, MULTIPLIER};
 
 pub const DUNGEON_SALT_MODERN: u64 = 30002;
@@ -15,7 +14,7 @@ impl DungeonSolver {
         let mut cur_seed = seed;
         for &block in pattern {
             // Next seed
-            cur_seed = JavaRandom::next_seed(cur_seed);
+            cur_seed = cur_seed.wrapping_mul(JavaRandom::MULTIPLIER).wrapping_add(JavaRandom::ADDEND) & MASK48;
             // nextInt(4) is top 2 bits of seed (bits 46 and 47)
             let val = ((cur_seed >> 46) & 3) as i32;
             match block {
@@ -72,7 +71,7 @@ impl DungeonSolver {
         for _ in 0..8 {
             prev_seed = (prev_seed.wrapping_mul(mult_m5).wrapping_add(add_m5)) & MASK48;
             let pop_seed = ((prev_seed ^ MULTIPLIER).wrapping_sub(salt)) & MASK48;
-            results.push(chunk_rand::reverse_population_seed(pop_seed, chunk_x, chunk_z));
+            results.push(crate::cracker::bedrock::reverse_population_seed(pop_seed, chunk_x, chunk_z));
         }
 
         results
