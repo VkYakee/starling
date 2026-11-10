@@ -67,7 +67,7 @@ def download_game(version, directory):
     # lab.download reuses only a file whose SHA-1 matches this official entry;
     # the launcher may have left a republished 26.3 manifest in this directory.
     lab.download(entry['url'], manifest_path, entry['sha1'])
-    actual_manifest_sha1 = lab.digest(manifest_path)
+    actual_manifest_sha1 = lab.digest(manifest_path, 'sha1')
     if actual_manifest_sha1 != entry['sha1']:
         raise ValueError(
             f"Invalid cached Minecraft {version} manifest: expected Mojang SHA-1 "
