@@ -1,7 +1,7 @@
 //! Region seed computation matching Horizon's WorldgenRandom exactly.
 //! This is used for structure placement and population seed generation.
 
-use horizon_core::random::LegacyRandom;
+use horizon_core::random::{LegacyRandom, RandomSource};
 
 /// Compute the region seed exactly as Horizon's WorldgenRandom::set_large_feature_with_salt does.
 /// This matches Java's ChunkGenerator::getRegionSeed.
