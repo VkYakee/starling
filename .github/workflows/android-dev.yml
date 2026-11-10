@@ -3,7 +3,7 @@ run-name: Android dev · ${{ github.sha }}
 
 on:
   push:
-    branches: [jules]
+    branches: [android]
     paths:
       - 'crates/**'
       - 'Cargo.toml'
