@@ -34,7 +34,7 @@ concurrency:
 jobs:
   build:
     # Never expose a signing secret to pull requests or arbitrary dispatch refs.
-    if: github.ref == 'refs/heads/jules'
+    if: github.ref == 'refs/heads/android'
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     strategy:
