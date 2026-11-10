@@ -14,13 +14,13 @@ impl SeedCrackerPage {
 
 /// Quick action buttons for SeedCracker
 const SC_ACTIONS: &[(&str, &str, [u8; 4])] = &[
-    ("📊 Toggle HUD", "/sc gui", palette::GREEN),
-    ("🔄 Collect", "/sc collect", palette::GREEN_DARK),
-    ("🎯 Solve Seed", "/sc solve", palette::RED),
-    ("🔍 Finders", "/sc finder reload", palette::ACCENT),
-    ("👁️ ESP", "/sc esp", palette::GREEN),
-    ("📁 Export CSV", "/sc export", palette::BORDER),
-    ("⚠️ Hard Reset", "/sc reset", palette::RED_DARK),
+    ("📊 Toggle HUD", "sc gui", palette::GREEN),
+    ("🔄 Collect", "sc collect", palette::GREEN_DARK),
+    ("🎯 Solve Seed", "sc solve", palette::RED),
+    ("🔍 Finders", "sc finder reload", palette::ACCENT),
+    ("👁️ ESP", "sc esp", palette::GREEN),
+    ("📁 Export CSV", "sc export", palette::BORDER),
+    ("⚠️ Hard Reset", "sc reset", palette::RED_DARK),
 ];
 
 impl super::Page for SeedCrackerPage {
