@@ -15,7 +15,7 @@ impl EndPillars {
 
         // Java Collections.shuffle algorithm:
         for i in (2..=PILLAR_COUNT).rev() {
-            let j = rand.next_int_bounded(i as i32) as usize;
+            let j = rand.next_int_bounded(i as i32).unwrap_or(0) as usize;
             indices.swap(i - 1, j);
         }
 
