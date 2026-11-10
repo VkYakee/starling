@@ -226,14 +226,10 @@ pub fn on_structure_found(st_type: &str, chunk_x: i32, chunk_z: i32) {
     }
 }
 
+/// Legacy textual HUDs are intentionally disabled: mod controls belong to VlaKeeUI
+/// touch pages, not an unclickable stream of terminal-like lines over gameplay.
 pub fn get_hud_lines() -> Vec<String> {
-    let mut lines = Vec::new();
-    if let Ok(h) = hub().lock() {
-        for m in &h.mods {
-            lines.extend(m.hud_lines());
-        }
-    }
-    lines
+    Vec::new()
 }
 
 pub fn get_bounding_boxes() -> Vec<[f32; 10]> {
