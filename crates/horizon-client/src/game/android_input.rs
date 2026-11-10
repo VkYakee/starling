@@ -73,25 +73,79 @@ impl Game<'_> {
         event: &WindowEvent,
     ) -> bool {
         const POINTER: u64 = u64::MAX - 2;
+        let WindowEvent::MouseInput {
+            device_id, state, button: MouseButton::Left, ..
+        } = event else { return false; };
+        if *device_id == DeviceId::dummy() { return false; }
+        let Some(batch) = self.gui_scale() else { return false; };
+        let point = [self.cursor.0, self.cursor.1];
+        // Native pointer/touch activation for VkYakee's floating launcher.
+        if *state == ElementState::Pressed {
+            let (w, h) = (batch.width, batch.height);
+            let bx = (w - 52.0).max(4.0);
+            let by = (h * 0.52 - 21.0).clamp(4.0, (h - 46.0).max(4.0));
+            if point[0] >= bx && point[0] <= bx + 42.0 && point[1] >= by && point[1] <= by + 42.0 {
+                vkyakee_mods::toggle_mod_menu();
+                return true;
+            }
+            let menu = vkyakee_mods::mod_menu_state().lock().unwrap_or_else(|e| e.into_inner()).clone();
+            if menu.open {
+                let mx = (bx - 194.0).max(4.0);
+                let my = (by - 28.0).clamp(4.0, (h - 178.0).max(4.0));
+                if menu.page == vkyakee_mods::MenuPage::Home {
+                    if point[0] >= mx + 8.0 && point[0] <= mx + 176.0 && point[1] >= my + 51.0 && point[1] <= my + 82.0 {
+                        vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::OpenSeedCracker);
+                        return true;
+                    }
+                } else if menu.page == vkyakee_mods::MenuPage::SeedFinders {
+                    if point[0] >= mx + 8.0 && point[0] <= mx + 54.0 && point[1] >= my + 3.0 && point[1] <= my + 22.0 {
+                        vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::Back);
+                        return true;
+                    }
+                    if point[1] >= my + 150.0 && point[1] <= my + 170.0 {
+                        vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::NextFinderPage);
+                        return true;
+                    }
+                    if point[1] >= my + 39.0 && point[1] <= my + 149.0 {
+                        let row=((point[1]-(my+39.0))/11.0) as usize;
+                        let index=menu.finder_page as usize * 10 + row;
+                        let sc=vkyakee_mods::seedcracker_hud_snapshot();
+                        if let Some((name,enabled))=sc.finders.get(index) {
+                            vkyakee_mods::seedcracker_hud_action(&format!("sc finder {} {}",name,if *enabled {"off"} else {"on"}));
+                        }
+                        return true;
+                    }
+                } else {
+                    if point[0] >= mx + 8.0 && point[0] <= mx + 54.0 && point[1] >= my + 3.0 && point[1] <= my + 22.0 {
+                        vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::Back);
+                        return true;
+                    }
+                    if point[1] >= my + 114.0 && point[1] <= my + 140.0 {
+                        if point[0] >= mx + 8.0 && point[0] <= mx + 88.0 {
+                            vkyakee_mods::seedcracker_hud_action("sc solve");
+                        } else if point[0] >= mx + 94.0 && point[0] <= mx + 174.0 {
+                            vkyakee_mods::seedcracker_hud_action("sc reset_all");
+                        }
+                        return true;
+                    }
+                    if point[1] >= my + 141.0 && point[1] <= my + 169.0 {
+                        if point[0] >= mx + 8.0 && point[0] <= mx + 88.0 {
+                            vkyakee_mods::seedcracker_hud_action("sc esp");
+                        } else if point[0] >= mx + 94.0 && point[0] <= mx + 174.0 {
+                            vkyakee_mods::dispatch_mod_menu_action(vkyakee_mods::MenuAction::OpenFinders);
+                        }
+                        return true;
+                    }
+                    if point[1] >= my + 23.0 && point[1] <= my + 42.0 {
+                        vkyakee_mods::seedcracker_hud_action("sc collect");
+                        return true;
+                    }
+                }
+            }
+        }
         if !self.settings.keypad.enabled || (self.captured && crate::keyboard_mouse_input()) {
             return false;
         }
-        let WindowEvent::MouseInput {
-            device_id,
-            state,
-            button: MouseButton::Left,
-            ..
-        } = event
-        else {
-            return false;
-        };
-        if *device_id == DeviceId::dummy() {
-            return false;
-        }
-        let Some(batch) = self.gui_scale() else {
-            return false;
-        };
-        let point = [self.cursor.0, self.cursor.1];
         let normalized = [point[0] / batch.width, point[1] / batch.height];
         // What the pad has under the pointer, and what it holds: touches are
         // position-dependent and change with the layout, ownership survives

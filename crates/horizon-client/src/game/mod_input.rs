@@ -118,6 +118,12 @@ impl Game<'_> {
     /// screen) is its `key-down` / `key-up`. Vanilla's mapping on the same
     /// key still runs.
     pub(super) fn mod_key(&mut self, key: KeyCode, pressed: bool, repeat: bool) {
+        // VkYakeeMods emergency keyboard toggle (F8); useful while touch hitboxes
+        // are being connected to the floating launcher.
+        if key == KeyCode::F8 && pressed && !repeat {
+            vkyakee_mods::toggle_mod_menu();
+            return;
+        }
         if repeat || !self.mods.mods.has_keys() {
             return;
         }

@@ -1,0 +1,8 @@
+/data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/deps/wit_bindgen-2932220f702e5fe6.d: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/rt/mod.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/rt/wit_bindgen_cabi_realloc.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/resource.rs
+
+/data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/deps/libwit_bindgen-2932220f702e5fe6.rmeta: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/rt/mod.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/rt/wit_bindgen_cabi_realloc.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/resource.rs
+
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/lib.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/rt/mod.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/rt/wit_bindgen_cabi_realloc.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wit-bindgen-0.60.0/src/resource.rs:

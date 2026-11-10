@@ -73,8 +73,8 @@ pub fn predict_structure_chunk(seed: u64, structure_type: StructureType, reg_x: 
 
     let mut rng = JavaRandom::new(step_seed);
     let range = (config.spacing - config.separation).max(1);
-    let ox = rng.next_int_bounded(range);
-    let oz = rng.next_int_bounded(range);
+    let ox = rng.next_int_bounded(range).unwrap_or(0);
+    let oz = rng.next_int_bounded(range).unwrap_or(0);
     let chunk_x = reg_x * config.spacing + ox;
     let chunk_z = reg_z * config.spacing + oz;
     (chunk_x, chunk_z)

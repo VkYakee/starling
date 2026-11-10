@@ -6,11 +6,14 @@ use crate::api::{ModMetadata, VkMod};
 use crate::storage::{DiscoveredBiome, DiscoveredStructure, StorageManager, WorldSessionData};
 use crate::verifier::SeedVerifier;
 use seedcracker::bedrock::{BedrockBlock, BlockType, HierarchicalBedrockCracker};
+use seedcracker::finders::{FinderPipeline, FinderKind, BlockObservation, BlockUpdateBatch, PatternKind};
 use seedcracker::math::hashed_seed::HashedSeed;
 use seedcracker::structures::TreasureDatabase;
 use seedcracker::timemachine::{CrackerState, TimeMachine};
 
 use std::collections::{HashSet, VecDeque};
+use std::sync::mpsc::{self, Receiver, Sender};
+use std::thread;
 use std::time::Instant;
 
 #[derive(Clone, Debug)]
@@ -20,6 +23,19 @@ pub struct ToastLog {
     pub created_at: Instant,
 }
 
+/// Read-only live data consumed by Starling's custom SeedCracker HUD.
+#[derive(Clone, Debug, Default)]
+pub struct SeedCrackerHudSnapshot {
+    pub active: bool, pub collecting: bool, pub solving: bool, pub cracked: Option<i64>,
+    pub chunks: usize, pub bedrock: usize, pub biomes: usize, pub structures: usize,
+    pub dungeons: usize, pub emeralds: usize, pub wells: usize, pub pillars: usize,
+    pub candidates: usize, pub status: String, pub dimension: String, pub finders: Vec<(String,bool)>,
+}
+static SEEDCRACKER_HUD: std::sync::OnceLock<std::sync::Mutex<SeedCrackerHudSnapshot>> = std::sync::OnceLock::new();
+pub fn seedcracker_hud_snapshot() -> SeedCrackerHudSnapshot {
+    SEEDCRACKER_HUD.get_or_init(||std::sync::Mutex::new(SeedCrackerHudSnapshot::default()))
+        .lock().unwrap_or_else(|e|e.into_inner()).clone()
+}
 pub struct SeedCrackerMod {
     state: CrackerState,
     pub treasure_db: TreasureDatabase,
@@ -34,15 +50,83 @@ pub struct SeedCrackerMod {
     status_message: String,
     bounding_boxes: Vec<[f32; 10]>,
     toasts: VecDeque<ToastLog>,
-    seen_chunks: HashSet<(i32, i32)>,
+    seen_chunks: HashSet<(String, i32, i32)>,
+    solve_tx: Sender<(u64, CrackerState)>,
+    solve_rx: std::sync::Mutex<Receiver<(u64, Vec<i64>)>>,
+    solving: bool,
+    solve_requested: bool,
+    solver_generation: u64,
     seen_biomes: HashSet<(i32, i32)>,
-    seen_structures: HashSet<(i32, i32)>,
+    seen_structures: HashSet<(String, i32, i32)>,
+    seen_treasures: HashSet<(i32,i32)>,
+    finder_pipeline: FinderPipeline,
+    finder_control_tx: Sender<FinderWorkerCommand>,
+    block_scan_tx: mpsc::SyncSender<(i32,i32,String,Vec<BlockObservation>)>,
+    block_scan_rx: std::sync::Mutex<Receiver<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>>,
+}
+
+enum FinderWorkerCommand {
+    Updates(BlockUpdateBatch),
+    Reload,
+    SetEnabled(seedcracker::finders::FinderType, bool),
+    Pause,
+    Resume,
 }
 
 impl SeedCrackerMod {
     pub fn new() -> Self {
         let storage = StorageManager::new();
         let session = storage.load_or_create("default_session");
+
+        let (solve_tx, work_rx) = mpsc::channel::<(u64, CrackerState)>();
+        let (result_tx, solve_rx) = mpsc::channel::<(u64, Vec<i64>)>();
+        let (block_scan_tx, scan_rx) = mpsc::sync_channel::<(i32,i32,String,Vec<BlockObservation>)>(32);
+        let (scan_result_tx, block_scan_rx) = mpsc::sync_channel::<(i32,i32,String,Vec<BlockObservation>,seedcracker::finders::AnalyzerOutput)>(32);
+        let (finder_control_tx, finder_control_rx) = mpsc::channel::<FinderWorkerCommand>();
+        thread::Builder::new().name("SeedCracker finders".into()).spawn(move || {
+            let mut pipeline=FinderPipeline::default();
+            while let Ok((cx,cz,dimension,blocks))=scan_rx.recv() {
+                while let Ok(command)=finder_control_rx.try_recv() {
+                    match command {
+                        FinderWorkerCommand::Updates(batch)=>pipeline.apply_block_updates(batch),
+                        FinderWorkerCommand::Reload=>pipeline.reload_finders(),
+                        FinderWorkerCommand::SetEnabled(kind,enabled)=>pipeline.set_finder_enabled(kind,enabled),
+                        FinderWorkerCommand::Pause=>{pipeline.pause();},
+                        FinderWorkerCommand::Resume=>pipeline.resume(),
+                    }
+                }
+                let output=pipeline.scan_blocks(&blocks);
+                if scan_result_tx.send((cx,cz,dimension,blocks,output)).is_err(){break;}
+            }
+        }).expect("SeedCracker finder thread");
+        thread::Builder::new().name("SeedCracker solver".into()).spawn(move || {
+            while let Ok((generation, snapshot)) = work_rx.recv() {
+                // TimeMachine is always executed: it coordinates structures,
+                // pillars, decorators, trees, biome/hash lifting and candidate
+                // Bedrock checks. A large Bedrock sample must never disable it.
+                let mut seeds = TimeMachine::solve(&snapshot).world_seeds;
+
+                // Hierarchical Bedrock is a complementary search, not an
+                // alternative solver. Merge its candidates into the same result.
+                if snapshot.bedrock_blocks.len() >= 30 {
+                    let bedrock_candidates =
+                        HierarchicalBedrockCracker::search(&snapshot.bedrock_blocks, 4, None);
+                    if let Some(hash) = snapshot.hashed_seed {
+                        for candidate in bedrock_candidates {
+                            seeds.extend(HashedSeed::find_world_seeds_from_hash(candidate, hash));
+                        }
+                    } else {
+                        // Until a hash is available these remain unconfirmed
+                        // 48-bit candidates; don't discard them.
+                        seeds.extend(bedrock_candidates.into_iter().map(|seed| seed as i64));
+                    }
+                }
+
+                seeds.sort_unstable();
+                seeds.dedup();
+                let _ = result_tx.send((generation, seeds));
+            }
+        }).expect("SeedCracker solver thread");
 
         Self {
             state: CrackerState::new(),
@@ -59,8 +143,18 @@ impl SeedCrackerMod {
             bounding_boxes: Vec::new(),
             toasts: VecDeque::new(),
             seen_chunks: HashSet::new(),
+            solve_tx,
+            solve_rx: std::sync::Mutex::new(solve_rx),
+            solving: false,
+            solve_requested: false,
+            solver_generation: 0,
             seen_biomes: HashSet::new(),
             seen_structures: HashSet::new(),
+            seen_treasures: HashSet::new(),
+            finder_pipeline: FinderPipeline::default(),
+            finder_control_tx,
+            block_scan_tx,
+            block_scan_rx: std::sync::Mutex::new(block_scan_rx),
         }
     }
 
@@ -79,6 +173,7 @@ impl SeedCrackerMod {
 
     pub fn toggle_collection(&mut self) {
         self.collecting = !self.collecting;
+        if self.collecting { self.finder_pipeline.resume(); let _=self.finder_control_tx.send(FinderWorkerCommand::Resume); } else { self.finder_pipeline.pause(); let _=self.finder_control_tx.send(FinderWorkerCommand::Pause); }
         if self.collecting {
             self.add_toast("▶ Recopilacion de datos ACTIVADA", 0x00FF88);
             self.status_message = "Recopilacion activa...".to_string();
@@ -90,11 +185,10 @@ impl SeedCrackerMod {
 
     pub fn record_biome(&mut self, x: i32, z: i32, biome_id: i32, name: &str) {
         self.verifier.update_player_pos(x, z);
-        if !self.collecting {
-            return;
-        }
-        let key = (x >> 6, z >> 6); // Agrupar por áreas de 64 bloques
+        if !self.collecting || !self.finder_pipeline.finder_enabled(seedcracker::FinderType::Biome) { return; }
+        let key = (x, z); // Cada coordenada biome observada aporta una restricción independiente
         if self.seen_biomes.insert(key) {
+            self.state.biome_samples.push(seedcracker::biomes::BiomeSample::new(x, 0, z, biome_id));
             let msg = format!("🌿 Bioma: {} en [{}, {}]", name, x, z);
             self.add_toast(msg, 0x55FF55);
 
@@ -105,45 +199,118 @@ impl SeedCrackerMod {
                 name: name.to_string(),
             });
             let _ = self.storage.save(&self.session);
+            if self.state.structures.len()>=1 && (self.state.biome_samples.len()>=3 || self.state.hashed_seed.is_some()) {self.solve();}
         }
     }
 
     pub fn record_structure(&mut self, st_type: &str, chunk_x: i32, chunk_z: i32) {
         self.verifier.on_structure_found(st_type, chunk_x, chunk_z);
-        if !self.collecting {
-            return;
-        }
-        let key = (chunk_x, chunk_z);
-        if self.seen_structures.insert(key) {
-            let bx = chunk_x * 16;
-            let bz = chunk_z * 16;
-            let msg = format!("🏛️ Estructura: {} en Chunk ({}, {})", st_type, chunk_x, chunk_z);
-            self.add_toast(msg, 0xFFD700);
-
-            self.session.structures.push(DiscoveredStructure {
-                structure_type: st_type.to_string(),
-                chunk_x,
-                chunk_z,
-                block_x: bx,
-                block_z: bz,
-            });
-            let _ = self.storage.save(&self.session);
-        }
+        if !self.collecting { return; }
+        let normalized=st_type.to_ascii_lowercase().replace(' ', "_");
+        let finder_type=match normalized.as_str(){
+            "desert_pyramid"|"desert_temple"=>Some(seedcracker::FinderType::DesertPyramid),
+            "jungle_temple"|"jungle_pyramid"=>Some(seedcracker::FinderType::JungleTemple),
+            "swamp_hut"=>Some(seedcracker::FinderType::SwampHut),"igloo"=>Some(seedcracker::FinderType::Igloo),
+            "village"=>Some(seedcracker::FinderType::Village),"shipwreck"=>Some(seedcracker::FinderType::Shipwreck),
+            "ocean_monument"|"monument"=>Some(seedcracker::FinderType::Monument),
+            "pillager_outpost"|"outpost"=>Some(seedcracker::FinderType::Outpost),
+            "end_city"=>Some(seedcracker::FinderType::EndCity),"trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),"ancient_city"=>Some(seedcracker::FinderType::AncientCity),_=>None};
+        if finder_type.is_some_and(|kind|!self.finder_pipeline.finder_enabled(kind)){return;}
+        let key=(normalized.clone(),chunk_x,chunk_z);
+        if !self.seen_structures.insert(key){return;}
+        let structure_type=match normalized.as_str(){
+            "desert_pyramid"|"desert_temple"=>Some(seedcracker::StructureType::DesertPyramid),
+            "jungle_temple"|"jungle_pyramid"=>Some(seedcracker::StructureType::JungleTemple),
+            "swamp_hut"=>Some(seedcracker::StructureType::SwampHut),"igloo"=>Some(seedcracker::StructureType::Igloo),
+            "village"=>Some(seedcracker::StructureType::Village),"shipwreck"=>Some(seedcracker::StructureType::Shipwreck),
+            "ocean_monument"|"monument"=>Some(seedcracker::StructureType::OceanMonument),
+            "pillager_outpost"|"outpost"=>Some(seedcracker::StructureType::PillagerOutpost),
+            "end_city"=>Some(seedcracker::StructureType::EndCity),"trial_chambers"=>Some(seedcracker::StructureType::TrialChambers),
+            "ancient_city"=>Some(seedcracker::StructureType::AncientCity),_=>None};
+        if let Some(t)=structure_type {if !self.state.structures.iter().any(|s|s.structure_type==t&&s.chunk_x==chunk_x&&s.chunk_z==chunk_z){self.state.structures.push(seedcracker::StructureInstance::new(t,chunk_x,chunk_z));}}
+        let bx=chunk_x*16;let bz=chunk_z*16;
+        self.add_toast(format!("🏛️ Estructura: {} en Chunk ({}, {})",st_type,chunk_x,chunk_z),0xFFD700);
+        self.session.structures.push(DiscoveredStructure{structure_type:st_type.to_string(),chunk_x,chunk_z,block_x:bx,block_z:bz});
+        let _=self.storage.save(&self.session);
+        if self.state.structures.len()>=2 {self.solve();}
     }
 
+    /// Feeds decoded block palettes to the Rust finder engine (structures/decorators/pillars).
+    fn process_block_snapshot(&mut self, blocks: &[BlockObservation], output: seedcracker::finders::AnalyzerOutput) {
+        if !self.active || !self.collecting { return; }
+        let snapshot=blocks.to_vec();
+        for s in output.structures { if !self.state.structures.iter().any(|v|v.structure_type==s.structure_type&&v.chunk_x==s.chunk_x&&v.chunk_z==s.chunk_z){self.state.structures.push(s);} }
+        for hit in output.observations.patterns {
+            match hit.kind {
+                PatternKind::BuriedTreasure => {
+                    let chunk=(hit.x.div_euclid(16),hit.z.div_euclid(16));
+                    if self.seen_treasures.insert(chunk) {
+                        let observed:Vec<(i32,i32)>=self.seen_treasures.iter().copied().collect();
+                        for formation in &self.treasure_db.formations {
+                            if formation.matches(&observed) {for &seed in &formation.seeds {if !self.state.candidate_seeds.contains(&seed){self.state.candidate_seeds.push(seed);}}}
+                        }
+                    }
+                },
+                PatternKind::EmeraldOre => { let data=seedcracker::EmeraldOreData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.y,hit.z);if !self.state.emerald_ores.iter().any(|e|e.block_x==data.block_x&&e.block_y==data.block_y&&e.block_z==data.block_z){self.state.emerald_ores.push(data);} },
+                PatternKind::DesertWell => {let data=seedcracker::DesertWellData::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.z);if !self.state.desert_wells.iter().any(|w|w.block_x==data.block_x&&w.block_z==data.block_z){self.state.desert_wells.push(data);} },
+                PatternKind::Dungeon => {
+                    let mut calls=Vec::with_capacity(81);
+                    for dx in -4..=4 {for dz in -4..=4 {let block=snapshot.iter().find(|b|b.x==hit.x+dx&&b.y==hit.y-1&&b.z==hit.z+dz).map(|b|b.block.to_ascii_lowercase()).unwrap_or_default();calls.push(if block.contains("mossy_cobblestone"){seedcracker::dungeon::DungeonFloorBlock::MossyCobblestone}else if block.contains("cobblestone"){seedcracker::dungeon::DungeonFloorBlock::Cobblestone}else{seedcracker::dungeon::DungeonFloorBlock::Unknown});}}
+                    if !self.state.dungeon_floors.iter().any(|d|d.block_x==hit.x&&d.block_y==hit.y&&d.block_z==hit.z){self.state.dungeon_floors.push(seedcracker::dungeon::DungeonFloor::new(hit.x.div_euclid(16),hit.z.div_euclid(16),hit.x,hit.y,hit.z,9,9,calls));}
+                },
+                PatternKind::EndPillar => {
+                    let radius=((hit.x as f64).powi(2)+(hit.z as f64).powi(2)).sqrt();
+                    if (38.0..=46.0).contains(&radius) {
+                        let angle=(hit.z as f64).atan2(hit.x as f64);
+                        let idx=(((angle+std::f64::consts::PI)/(2.0*std::f64::consts::PI))*10.0).round() as usize%10;
+                        if (76..=103).contains(&hit.y) { self.state.pillar_heights[idx]=Some(self.state.pillar_heights[idx].unwrap_or(0).max(hit.y)); }
+                    }
+                }, _=>{}
+            }
+        }
+        if !self.state.candidate_seeds.is_empty() || self.state.structures.len()>=2 || self.state.emerald_ores.len()>=2 || self.state.desert_wells.len()>=2 || self.state.dungeon_floors.len()>=1 || self.state.pillar_heights.iter().filter(|p|p.is_some()).count()>=3 { self.solve(); }
+    }
+    /// Incremental world block mutation invalidates and replaces detector observations.
+    pub fn on_block_updates(&mut self, updates: Vec<BlockObservation>, removed: Vec<(i32,i32,i32)>) {
+        let mut changed=removed.clone();
+        changed.extend(updates.iter().map(|b|(b.x,b.y,b.z)));
+        for (x,y,z) in changed {
+            self.state.emerald_ores.retain(|o|o.block_x!=x||o.block_y!=y||o.block_z!=z);
+            self.state.desert_wells.retain(|w|w.block_x!=x||w.block_z!=z);
+            self.state.dungeon_floors.retain(|d|d.block_x!=x||d.block_y!=y||d.block_z!=z);
+            let radius=((x as f64).powi(2)+(z as f64).powi(2)).sqrt();
+            if (38.0..=46.0).contains(&radius)&&(76..=103).contains(&y) {
+                let angle=(z as f64).atan2(x as f64);
+                let idx=(((angle+std::f64::consts::PI)/(2.0*std::f64::consts::PI))*10.0).round() as usize%10;
+                self.state.pillar_heights[idx]=None;
+            }
+        }
+        let batch=BlockUpdateBatch{updates:updates.clone(),removed};
+        self.finder_pipeline.apply_block_updates(batch.clone());
+        let _=self.finder_control_tx.send(FinderWorkerCommand::Updates(batch));
+        if self.collecting && !updates.is_empty() { let cx=updates[0].x.div_euclid(16); let cz=updates[0].z.div_euclid(16); let _=self.block_scan_tx.try_send((cx,cz,String::from("unknown"),updates)); }
+    }
+    /// Rebuild detector caches when dimension, version, or collection settings change.
+    pub fn reload_finders(&mut self) { self.finder_pipeline.reload_finders(); let _=self.finder_control_tx.send(FinderWorkerCommand::Reload); self.seen_chunks.clear(); self.seen_biomes.clear(); self.seen_structures.clear(); }
     pub fn reset(&mut self) {
         self.reset_all();
     }
 
     /// Hard Reset: Clears memory, verifier state, cache, and wipes saved session progress.
     pub fn reset_all(&mut self) {
+        self.finder_pipeline.stop();
+        self.finder_pipeline = FinderPipeline::default();
         self.state = CrackerState::new();
         self.verifier = SeedVerifier::new();
         self.cracked_seed = None;
         self.bounding_boxes.clear();
         self.seen_chunks.clear();
+        self.solver_generation = self.solver_generation.wrapping_add(1);
+        self.solving = false;
+        self.solve_requested = false;
         self.seen_biomes.clear();
         self.seen_structures.clear();
+        self.seen_treasures.clear();
         self.session.cracked_seed = None;
         self.session.bedrock_chunks.clear();
         self.session.biomes.clear();
@@ -154,55 +321,78 @@ impl SeedCrackerMod {
         self.add_toast("⚠️ REINICIO TOTAL: Todo reseteado desde cero", 0xFF5555);
     }
 
+    /// Queue a snapshot; expensive seed searches never run on the game thread.
     pub fn solve(&mut self) {
-        if self.state.bedrock_blocks.len() >= 20 {
-            self.add_toast(format!("⚙️ Resolviendo reticulo con {} bloques...", self.state.bedrock_blocks.len()), 0xFFFF55);
-            self.status_message = format!("Buscando semilla en {} bloques de Bedrock...", self.state.bedrock_blocks.len());
+        if self.solving { self.solve_requested=true; return; }
+        let has_bedrock = !self.state.bedrock_blocks.is_empty();
+        let has_treasure_candidates = !self.state.candidate_seeds.is_empty();
+        let has_structures = !self.state.structures.is_empty();
+        let has_pillars = self.state.pillar_heights.iter().any(Option::is_some);
+        let has_other_observations = !self.state.dungeon_floors.is_empty()
+            || !self.state.trees.is_empty()
+            || !self.state.emerald_ores.is_empty()
+            || !self.state.desert_wells.is_empty()
+            || !self.state.biome_samples.is_empty();
+        if !(has_bedrock || has_treasure_candidates || has_structures || has_pillars || has_other_observations) {
+            return;
+        }
 
-            let candidates = HierarchicalBedrockCracker::search(&self.state.bedrock_blocks, 4, None);
-            if !candidates.is_empty() {
-                if let Some(hseed) = self.state.hashed_seed {
-                    let mut found_all = Vec::new();
-                    for &c in &candidates {
-                        let world_seeds = HashedSeed::find_world_seeds_from_hash(c, hseed);
-                        found_all.extend(world_seeds);
-                    }
-                    if let Some(&first) = found_all.first() {
-                        self.cracked_seed = Some(first);
-                        self.session.cracked_seed = Some(first);
-                        let _ = self.storage.save(&self.session);
-                        let success_msg = format!("⭐ ¡SEMILLA DESCIFRADA! -> {}", first);
-                        self.status_message = success_msg.clone();
-                        self.add_toast(success_msg, 0x00FF00);
-                        log::info!("SeedCracker: ¡Semilla de mundo encontrada! {}", first);
-                        let cand_u64: Vec<u64> = found_all.iter().map(|&s| s as u64).collect();
-                        crate::broadcast_seed_candidates(&cand_u64);
-                        self.verifier.set_candidates(cand_u64);
-                        return;
-                    }
-                } else if let Some(&first) = candidates.first() {
-                    self.cracked_seed = Some(first as i64);
-                    self.status_message = format!("Candidato Bedrock -> 0x{:012X}", first);
-                    self.add_toast(format!("🔑 Candidato 48-bit: 0x{:012X}", first), 0xFFFF00);
-                    crate::broadcast_seed_candidates(&candidates);
-                    self.verifier.set_candidates(candidates);
+        self.status_message = format!(
+            "Coordinando cracking: {} bloques Bedrock + estructuras/pistas...",
+            self.state.bedrock_blocks.len()
+        );
+        self.solver_generation = self.solver_generation.wrapping_add(1);
+        self.solving = self
+            .solve_tx
+            .send((self.solver_generation, self.state.clone()))
+            .is_ok();
+    }
+
+    fn poll_finders(&mut self) {
+        // Drain a bounded amount per tick to keep the game thread responsive.
+        for _ in 0..4 {
+            let Some((_sequence, output)) = self.finder_pipeline.run_one() else { break; };
+            for block in output.bedrock {
+                if !self.state.bedrock_blocks.iter().any(|b| b.x==block.x && b.y==block.y && b.z==block.z) {
+                    self.state.bedrock_blocks.push(block);
                 }
             }
-        } else {
-            let res = TimeMachine::solve(&self.state);
-            if let Some(&ws) = res.world_seeds.first() {
-                self.cracked_seed = Some(ws);
-                self.session.cracked_seed = Some(ws);
-                let _ = self.storage.save(&self.session);
-                let success_msg = format!("⭐ ¡Semilla encontrada! -> {}", ws);
-                self.status_message = success_msg.clone();
-                self.add_toast(success_msg, 0x00FF00);
-                let cand_u64: Vec<u64> = res.world_seeds.iter().map(|&s| s as u64).collect();
-                crate::broadcast_seed_candidates(&cand_u64);
-                self.verifier.set_candidates(cand_u64);
+            for structure in output.structures {
+                if !self.state.structures.iter().any(|s|s.structure_type==structure.structure_type&&s.chunk_x==structure.chunk_x&&s.chunk_z==structure.chunk_z){self.state.structures.push(structure);}
             }
+            if self.state.bedrock_blocks.len()>=30 && !self.solving {self.solve();}
         }
     }
+
+    fn poll_solver(&mut self) {
+        loop {
+            let received = { self.solve_rx.lock().unwrap_or_else(|e|e.into_inner()).try_recv() };
+            let Ok((generation, candidates)) = received else { break; };
+            // Ignore results from a reset or a superseded solve request.
+            if generation != self.solver_generation {
+                continue;
+            }
+            self.solving = false;
+            let rerun=self.solve_requested; self.solve_requested=false;
+            if rerun { self.solve(); continue; }
+            if candidates.is_empty() {
+                self.status_message = "Análisis terminado: sin candidatos".into();
+                continue;
+            }
+            let candidates_u64: Vec<u64> =
+                candidates.iter().map(|&seed| seed as u64).collect();
+            if let Some(&seed) = candidates.first() {
+                self.cracked_seed = Some(seed);
+                self.session.cracked_seed = Some(seed);
+                let _ = self.storage.save(&self.session);
+                self.status_message = format!("⭐ Semilla/candidato encontrado: {seed}");
+                self.add_toast(self.status_message.clone(), 0x00FF00);
+            }
+            crate::publish_seed_candidates(&candidates_u64);
+            self.verifier.set_candidates(candidates_u64);
+        }
+    }
+
 }
 
 impl VkMod for SeedCrackerMod {
@@ -222,11 +412,54 @@ impl VkMod for SeedCrackerMod {
         }
         log::info!("SeedCracker: Interceptado Hashed Seed = 0x{:016X}", hashed_seed);
         self.state.hashed_seed = Some(hashed_seed as i64);
+        self.finder_pipeline.resume();
         self.session.hashed_seed = Some(hashed_seed);
         let _ = self.storage.save(&self.session);
 
         self.add_toast(format!("🔑 Hashed Seed: 0x{:016X}", hashed_seed), 0x00FFFF);
         self.status_message = format!("Hashed Seed: 0x{:016X}", hashed_seed);
+    }
+
+    fn on_tick(&mut self) {
+        loop {
+            let received = { self.block_scan_rx.lock().unwrap_or_else(|e|e.into_inner()).try_recv() };
+            let Ok((_cx,_cz,_dimension,blocks,output)) = received else { break; };
+            self.process_block_snapshot(&blocks,output);
+        }
+        self.poll_finders();
+        self.poll_solver();
+        let snap=SeedCrackerHudSnapshot {
+            active:self.active, collecting:self.collecting, solving:self.solving, cracked:self.cracked_seed,
+            chunks:self.session.total_scanned_chunks, bedrock:self.state.bedrock_blocks.len(),
+            biomes:self.session.biomes.len(), structures:self.state.structures.len(),
+            dungeons:self.state.dungeon_floors.len(), emeralds:self.state.emerald_ores.len(),
+            wells:self.state.desert_wells.len(), pillars:self.state.pillar_heights.iter().filter(|v|v.is_some()).count(),
+            candidates:self.state.candidate_seeds.len(), status:self.status_message.chars().take(72).collect(),
+            dimension:String::new(),
+            finders: vec![
+                ("treasure".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::BuriedTreasure)),
+                ("desert_pyramid".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::DesertPyramid)),
+                ("jungle_temple".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::JungleTemple)),
+                ("swamp_hut".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::SwampHut)),
+                ("igloo".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Igloo)),
+                ("village".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Village)),
+                ("biome".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Biome)),
+                ("shipwreck".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Shipwreck)),
+                ("monument".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Monument)),
+                ("outpost".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Outpost)),
+                ("end_city".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::EndCity)),
+                ("trial_chambers".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::TrialChambers)),
+                ("ancient_city".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::AncientCity)),
+                ("end_pillars".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::EndPillars)),
+                ("end_gateway".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::EndGateway)),
+                ("dungeon".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::Dungeon)),
+                ("emerald_ore".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::EmeraldOre)),
+                ("desert_well".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::DesertWell)),
+                ("warped_fungus".into(),self.finder_pipeline.finder_enabled(seedcracker::FinderType::WarpedFungus)),
+            ],
+        };
+        *SEEDCRACKER_HUD.get_or_init(||std::sync::Mutex::new(SeedCrackerHudSnapshot::default()))
+            .lock().unwrap_or_else(|e|e.into_inner())=snap;
     }
 
     fn on_chunk_loaded(
@@ -240,6 +473,8 @@ impl VkMod for SeedCrackerMod {
             return;
         }
 
+        let chunk_key = (dimension.to_owned(), cx, cz);
+        if !self.seen_chunks.insert(chunk_key) { return; }
         self.session.total_scanned_chunks += 1;
 
         if let Some(mask) = bedrock_mask {
@@ -247,6 +482,7 @@ impl VkMod for SeedCrackerMod {
             let base_y = if is_nether { 123 } else { 0 };
 
             let mut count = 0;
+            let mut observed_bedrock = Vec::new();
             for z in 0..16 {
                 for x in 0..16 {
                     let idx = (z << 4) | x;
@@ -254,12 +490,13 @@ impl VkMod for SeedCrackerMod {
                         count += 1;
                         let bx = (cx << 4) + x as i32;
                         let bz = (cz << 4) + z as i32;
-                        self.state.bedrock_blocks.push(BedrockBlock::new(bx, base_y, bz, BlockType::Bedrock));
+                        observed_bedrock.push(BedrockBlock::new(bx, base_y, bz, BlockType::Bedrock));
                     }
                 }
             }
 
-            if count > 0 && self.seen_chunks.insert((cx, cz)) {
+            if count > 0 {
+                let _ = self.finder_pipeline.enqueue_chunk(FinderKind::Combined, dimension, cx, cz, observed_bedrock);
                 let hex_mask: String = mask.iter().map(|b| if *b != 0 { '1' } else { '0' }).collect();
                 self.session.bedrock_chunks.insert(format!("{},{}", cx, cz), hex_mask);
                 let _ = self.storage.save(&self.session);
@@ -271,6 +508,23 @@ impl VkMod for SeedCrackerMod {
                 }
             }
         }
+    }
+
+    fn on_block_snapshot(&mut self, chunk_x:i32, chunk_z:i32, dimension:&str, blocks:&[(i32,i32,i32,String)]) {
+        let _=(chunk_x,chunk_z,dimension);
+        let observations:Vec<BlockObservation>=blocks.iter().map(|(x,y,z,name)|BlockObservation::new(*x,*y,*z,name.clone())).collect();
+        // Bounded async channel: never stall Starling's chunk commit thread.
+        match self.block_scan_tx.try_send((chunk_x,chunk_z,dimension.to_owned(),observations)) {
+            Ok(())=>{},
+            Err(mpsc::TrySendError::Full(_))=>self.add_toast("SeedCracker: cola de análisis llena; snapshot omitido",0xFFAA00),
+            Err(mpsc::TrySendError::Disconnected(_))=>self.status_message="SeedCracker finder worker desconectado".into(),
+        }
+    }
+
+    fn on_block_update(&mut self, x:i32, y:i32, z:i32, block:Option<&str>) {
+        let updates=block.map(|name|vec![BlockObservation::new(x,y,z,name)]).unwrap_or_default();
+        let removed=if block.is_none(){vec![(x,y,z)]}else{Vec::new()};
+        self.on_block_updates(updates,removed);
     }
 
     fn on_biome_found(&mut self, x: i32, z: i32, biome_id: i32, name: &str) {
@@ -306,6 +560,24 @@ impl VkMod for SeedCrackerMod {
                 "reset" | "reset_all" | "clear" => {
                     self.reset_all();
                 }
+                "finder" => {
+                    let name=parts.get(2).copied().unwrap_or("reload");
+                    if name=="reload"||name=="reset" { self.reload_finders(); }
+                    else {
+                        let kind=match name {
+                            "treasure"|"buried_treasure"=>Some(seedcracker::FinderType::BuriedTreasure),
+                            "desert_pyramid"|"desert_temple"=>Some(seedcracker::FinderType::DesertPyramid),
+                            "jungle_temple"=>Some(seedcracker::FinderType::JungleTemple),"swamp_hut"=>Some(seedcracker::FinderType::SwampHut),
+                            "igloo"=>Some(seedcracker::FinderType::Igloo),"village"=>Some(seedcracker::FinderType::Village),"biome"=>Some(seedcracker::FinderType::Biome),
+                            "shipwreck"=>Some(seedcracker::FinderType::Shipwreck),"monument"=>Some(seedcracker::FinderType::Monument),
+                            "outpost"=>Some(seedcracker::FinderType::Outpost),"end_city"=>Some(seedcracker::FinderType::EndCity),
+                            "trial_chambers"=>Some(seedcracker::FinderType::TrialChambers),"ancient_city"=>Some(seedcracker::FinderType::AncientCity),"end_pillars"=>Some(seedcracker::FinderType::EndPillars),
+                            "end_gateway"=>Some(seedcracker::FinderType::EndGateway),"dungeon"=>Some(seedcracker::FinderType::Dungeon),
+                            "emerald_ore"=>Some(seedcracker::FinderType::EmeraldOre),"desert_well"=>Some(seedcracker::FinderType::DesertWell),
+                            "warped_fungus"=>Some(seedcracker::FinderType::WarpedFungus),_=>None};
+                        if let Some(kind)=kind {let enabled=parts.get(3).copied().unwrap_or("on")!="off";self.finder_pipeline.set_finder_enabled(kind,enabled);let _=self.finder_control_tx.send(FinderWorkerCommand::SetEnabled(kind,enabled));self.add_toast(format!("Finder {} {}",name,if enabled{"activado"}else{"desactivado"}),0x00FF88);}
+                    }
+                }
                 "solve" => {
                     self.solve();
                 }
@@ -322,7 +594,7 @@ impl VkMod for SeedCrackerMod {
                     log::info!("SeedCracker Estado: {}", self.status_message);
                 }
                 "help" => {
-                    log::info!("Comandos: /sc [gui | collect | solve | reset | esp | export | status]");
+                    log::info!("Comandos: /sc [gui | collect | solve | finder reload|finder <name> on/off | reset | esp | export | status]");
                 }
                 _ => {}
             }
@@ -333,45 +605,7 @@ impl VkMod for SeedCrackerMod {
     }
 
     fn hud_lines(&self) -> Vec<String> {
-        if !self.show_hud {
-            return Vec::new();
-        }
-
-        let mut lines = Vec::new();
-        lines.push("┌─ [ VkYakeeMods ] SeedCracker v1.0.0 ─┐".to_string());
-        
-        let col_status = if self.collecting { "[▶ RECOPILACION: ACTIVA]" } else { "[⏸ RECOPILACION: PAUSADA]" };
-        lines.push(format!("│ Modo: {} (Toca p/ alternar)", col_status));
-
-        if let Some(seed) = self.cracked_seed {
-            lines.push(format!("│ ⭐ SEMILLA DESCIFRADA: {}", seed));
-        } else {
-            lines.push(format!("│ Estado: {}", self.status_message));
-            lines.push(format!("│ Chunks: {} | Bedrock: {} blqs | Biomas: {}", 
-                self.session.total_scanned_chunks, 
-                self.state.bedrock_blocks.len(),
-                self.session.biomes.len()
-            ));
-        }
-
-        let verifier_lines = self.verifier.hud_lines();
-        if !verifier_lines.is_empty() {
-            lines.push("├─ Asistente de Verificación:".to_string());
-            for vl in verifier_lines {
-                lines.push(format!("│  {}", vl));
-            }
-        }
-
-        // Mostrar últimos eventos / toasts
-        if !self.toasts.is_empty() {
-            lines.push("├─ Registros Recientes:".to_string());
-            for toast in self.toasts.iter().rev().take(3) {
-                lines.push(format!("│  {}", toast.text));
-            }
-        }
-        lines.push("└─ (/sc collect | /sc solve | /sc reset_all) ─┘".to_string());
-
-        lines
+        Vec::new()
     }
 
     fn render_bounding_boxes(&self) -> Vec<[f32; 10]> {

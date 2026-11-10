@@ -86,10 +86,93 @@ impl Game<'_> {
 impl Game<'_> {
     /// The running mods' HUD shapes, in order, over the HUD.
     pub(super) fn draw_mod_shapes(&self, batch: &mut HudBatch) {
+        self.draw_vkyakee_menu(batch);
         for shape in self.mods.mods.hud_shapes() {
             self.draw_shapes(batch, std::slice::from_ref(shape), (0.0, 0.0));
         }
+        vkyakee_mods::draw_vlakee_ui(batch, &self.gui.atlas);
     }
+    /// VkYakeeMods floating launcher and translucent green/red menu.
+    /// Kept in Starling's HUD batch so it follows GUI scaling and render order.
+    fn draw_vkyakee_menu(&self, batch: &mut HudBatch) {
+        let state = vkyakee_mods::mod_menu_state()
+            .lock().unwrap_or_else(|e| e.into_inner()).clone();
+        if !state.visible { return; }
+        let atlas = &self.gui.atlas;
+        let (w, h) = (batch.width, batch.height);
+        let bx = (w - 52.0).max(4.0);
+        let by = (h * 0.52 - 21.0).clamp(4.0, (h - 46.0).max(4.0));
+        // Button shadow + charcoal glass + green outline and VK lettering.
+        batch.fill(atlas, bx - 2.0, by - 2.0, 46.0, 46.0, rgba(0, 0, 0, 105));
+        batch.fill(atlas, bx, by, 42.0, 42.0, rgba(12, 16, 18, 205));
+        batch.fill(atlas, bx, by, 42.0, 2.0, rgba(52, 214, 112, 235));
+        batch.fill(atlas, bx, by + 40.0, 42.0, 2.0, rgba(244, 66, 82, 235));
+        batch.text(atlas, "VK", bx + 9.0, by + 13.0, rgba(242, 246, 244, 255), true);
+        if !state.open { return; }
+
+        let (mw, mh) = (184.0, 174.0);
+        let mx = (bx - mw - 10.0).max(4.0);
+        let my = (by - 28.0).clamp(4.0, (h - mh - 4.0).max(4.0));
+        batch.fill(atlas, mx + 2.0, my + 3.0, mw, mh, rgba(0, 0, 0, 115));
+        batch.fill(atlas, mx, my, mw, mh, rgba(12, 16, 18, state.opacity));
+        // 12 vertical accent slices approximate a green -> red gradient.
+        for i in 0..12 {
+            let t = i as f32 / 11.0;
+            let r = (52.0 + (244.0 - 52.0) * t) as u8;
+            let g = (214.0 + (66.0 - 214.0) * t) as u8;
+            let b = (112.0 + (82.0 - 112.0) * t) as u8;
+            batch.fill(atlas, mx + i as f32 * (mw / 12.0), my, mw / 12.0 + 0.5, 3.0, rgba(r, g, b, 255));
+        }
+        batch.text(atlas, "VkYakeeMods", mx + 10.0, my + 10.0, rgba(242, 246, 244, 255), true);
+        batch.text(atlas, "MOD MENU", mx + 10.0, my + 24.0, rgba(154, 166, 162, 255), false);
+        batch.fill(atlas, mx + 8.0, my + 43.0, mw - 16.0, 1.0, rgba(66, 92, 78, 210));
+        if state.page == vkyakee_mods::MenuPage::Home {
+            batch.fill(atlas, mx + 8.0, my + 51.0, mw - 16.0, 31.0, rgba(18, 22, 24, 188));
+            batch.fill(atlas, mx + 8.0, my + 51.0, 2.0, 31.0, rgba(52, 214, 112, 255));
+            batch.text(atlas, "SeedCracker", mx + 16.0, my + 57.0, rgba(242, 246, 244, 255), true);
+            batch.text(atlas, "Seed analysis  >", mx + 16.0, my + 70.0, rgba(154, 166, 162, 255), false);
+            batch.text(atlas, "1 MODULE AVAILABLE", mx + 10.0, my + 94.0, rgba(52, 214, 112, 255), false);
+            batch.text(atlas, "Tap VK to close", mx + 10.0, my + 108.0, rgba(154, 166, 162, 255), false);
+        } else if state.page == vkyakee_mods::MenuPage::SeedFinders {
+            let sc = vkyakee_mods::seedcracker_hud_snapshot();
+            batch.text(atlas, "< BACK", mx + 10.0, my + 7.0, rgba(244, 66, 82, 255), true);
+            batch.text(atlas, "FINDER CONFIG", mx + 62.0, my + 7.0, rgba(242, 246, 244, 255), true);
+            batch.text(atlas, "Tap row to enable / disable", mx + 10.0, my + 24.0, rgba(154, 166, 162, 255), false);
+            for i in 0..9 {
+                if let Some((name, enabled)) = sc.finders.get(i) {
+                    let y = my + 39.0 + i as f32 * 12.0;
+                    batch.fill(atlas, mx + 8.0, y, mw - 16.0, 11.0, rgba(18, 22, 24, 190));
+                    batch.fill(atlas, mx + 8.0, y, 2.0, 11.0, if *enabled { rgba(52, 214, 112, 255) } else { rgba(244, 66, 82, 255) });
+                    batch.text(atlas, name, mx + 15.0, y + 2.0, rgba(242, 246, 244, 255), false);
+                    batch.text(atlas, if *enabled { "ON" } else { "OFF" }, mx + 151.0, y + 2.0, if *enabled { rgba(52, 214, 112, 255) } else { rgba(244, 66, 82, 255) }, true);
+                }
+            }
+            batch.text(atlas, if state.finder_page == 0 { "1-10 / 19  > NEXT" } else { "< PREV  11-19 / 19" }, mx + 10.0, my + 151.0, rgba(154, 166, 162, 255), false);
+        } else {
+            let sc = vkyakee_mods::seedcracker_hud_snapshot();
+            batch.text(atlas, "< BACK", mx + 10.0, my + 7.0, rgba(244, 66, 82, 255), true);
+            batch.text(atlas, "SEEDCRACKER", mx + 58.0, my + 7.0, rgba(242, 246, 244, 255), true);
+            batch.text(atlas, if sc.collecting { "SCAN: ON" } else { "SCAN: PAUSED" }, mx + 10.0, my + 25.0,
+                if sc.collecting { rgba(52, 214, 112, 255) } else { rgba(244, 66, 82, 255) }, true);
+            batch.text(atlas, if sc.solving { "SOLVER: RUNNING" } else if sc.cracked.is_some() { "SOLVER: FOUND" } else { "SOLVER: IDLE" }, mx + 100.0, my + 25.0, rgba(154, 166, 162, 255), false);
+            batch.fill(atlas, mx + 8.0, my + 43.0, mw - 16.0, 1.0, rgba(66, 92, 78, 210));
+            batch.text(atlas, &format!("Chunks {:>5}  Bedrock {:>4}", sc.chunks, sc.bedrock), mx + 10.0, my + 49.0, rgba(242, 246, 244, 255), false);
+            batch.text(atlas, &format!("Structures {:>3}  Biomes {:>4}", sc.structures, sc.biomes), mx + 10.0, my + 62.0, rgba(242, 246, 244, 255), false);
+            batch.text(atlas, &format!("Dungeon {}  Ore {}  Well {}", sc.dungeons, sc.emeralds, sc.wells), mx + 10.0, my + 75.0, rgba(154, 166, 162, 255), false);
+            batch.text(atlas, &format!("Pillars {}  Candidates {}", sc.pillars, sc.candidates), mx + 10.0, my + 88.0, rgba(154, 166, 162, 255), false);
+            if let Some(seed) = sc.cracked { batch.text(atlas, &format!("SEED: {}", seed), mx + 10.0, my + 101.0, rgba(52, 214, 112, 255), true); }
+            else { batch.text(atlas, &sc.status, mx + 10.0, my + 101.0, rgba(242, 246, 244, 255), false); }
+            batch.fill(atlas, mx + 8.0, my + 116.0, 80.0, 20.0, rgba(20, 126, 72, 210));
+            batch.fill(atlas, mx + 94.0, my + 116.0, 80.0, 20.0, rgba(150, 30, 48, 210));
+            batch.text(atlas, "SOLVE", mx + 28.0, my + 121.0, rgba(255, 255, 255, 255), true);
+            batch.text(atlas, "RESET", mx + 116.0, my + 121.0, rgba(255, 255, 255, 255), true);
+            batch.fill(atlas, mx + 8.0, my + 143.0, 80.0, 20.0, rgba(18, 22, 24, 205));
+            batch.fill(atlas, mx + 94.0, my + 143.0, 80.0, 20.0, rgba(18, 22, 24, 205));
+            batch.text(atlas, "ESP TOGGLE", mx + 17.0, my + 148.0, rgba(52, 214, 112, 255), false);
+            batch.text(atlas, "FINDERS", mx + 112.0, my + 148.0, rgba(244, 66, 82, 255), false);
+        }
+    }
+
     /// Shapes with their GUI coordinates moved by `(ox, oy)`.
     pub(super) fn draw_shapes(&self, batch: &mut HudBatch, shapes: &[Shape], (ox, oy): (f32, f32)) {
         let atlas = &self.gui.atlas;

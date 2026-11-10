@@ -1,0 +1,21 @@
+[mod]
+id = "vlakeematica"
+version = "1.0.0"
+
+[compatibility]
+horizon_revision = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+[hooks]
+# Client hooks
+on_tick = "vlakeematica_tick"
+on_player_pos = "vlakeematica_player_pos"
+on_block_update = "vlakeematica_block_update"
+on_chunk_loaded = "vlakeematica_chunk_loaded"
+on_command = "vlakeematica_command"
+hud_lines = "vlakeematica_hud"
+render_bounding_boxes = "vlakeematica_render_boxes"
+settings_buttons = "vlakeematica_settings"
+on_settings_click = "vlakeematica_settings_click"
+
+# Lifecycle
+init = "vlakeematica_init"

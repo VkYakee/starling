@@ -1,0 +1,8 @@
+id = "seedcracker"
+name = "SeedCracker"
+version = "0.1.0"
+description = "High-performance Minecraft seed cracking engine for Horizon/Starling. Extract seeds from worlds and servers using structure, biome, bedrock, and end pillar observations."
+authors = ["VkYakeeMods"]
+api = "0.1"
+side = "client"
+capabilities = ["game-read", "hud", "chat", "command", "storage"]

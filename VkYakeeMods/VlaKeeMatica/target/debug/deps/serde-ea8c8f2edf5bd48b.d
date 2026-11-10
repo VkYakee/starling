@@ -1,0 +1,12 @@
+/data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/deps/serde-ea8c8f2edf5bd48b.d: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs /data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/build/serde-45f01dedc195f515/out/private.rs
+
+/data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/deps/libserde-ea8c8f2edf5bd48b.rmeta: /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs /data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs /data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/build/serde-45f01dedc195f515/out/private.rs
+
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/lib.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/integer128.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/mod.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/de.rs:
+/data/data/com.termux/files/home/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.229/src/private/ser.rs:
+/data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/build/serde-45f01dedc195f515/out/private.rs:
+
+# env-dep:OUT_DIR=/data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/build/serde-45f01dedc195f515/out

@@ -1,0 +1,3 @@
+vec![
+  "/data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/build/cranelift-assembler-x64-3ae04d44645479ec/out/assembler.rs".into(),
+]

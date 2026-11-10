@@ -285,7 +285,11 @@ impl Game<'_> {
         let replaced_column = self.world.chunks.contains_key(&(x, z));
         self.streaming.insert_remote(&mut self.world, chunk);
         {
-            let target_y = if self.dim.id().contains("nether") { 123 } else { 0 };
+            let target_y = if self.dim.id().contains("nether") {
+                123
+            } else {
+                0
+            };
             let mut bedrock_mask = [0u8; 256];
             let mut found_bedrock = false;
             for bz in 0..16 {
@@ -301,8 +305,42 @@ impl Game<'_> {
                 x,
                 z,
                 self.dim.id(),
-                if found_bedrock { Some(&bedrock_mask) } else { None },
+                if found_bedrock {
+                    Some(&bedrock_mask)
+                } else {
+                    None
+                },
             );
+
+            // Publish Starling's canonical, already-decoded block snapshot to
+            // SeedCracker. Skip uniform-air sections and cache registry names
+            // per state id so this does not perform a registry lookup per block.
+            let mut block_snapshot: Vec<(i32, i32, i32, String)> = Vec::new();
+            let mut state_names: std::collections::HashMap<u32, String> =
+                std::collections::HashMap::new();
+            if let Some(column) = self.world.chunks.get(&(x, z)) {
+                for (section_index, section) in column.sections.iter().enumerate() {
+                    if section.is_uniform(0) { continue; }
+                    let section_y = column.min_y() + section_index as i32 * 16;
+                    let mut states = [0u32; 4096];
+                    section.unpack(&mut states);
+                    for (index, state_id) in states.into_iter().enumerate() {
+                        if state_id == 0 { continue; }
+                        let name = state_names.entry(state_id).or_insert_with(|| {
+                            self.res.facts().get(horizon_world::registry::BlockStateId(state_id)).name.as_ref().to_string()
+                        });
+                        if name == "minecraft:air" || name == "minecraft:cave_air"
+                            || name == "minecraft:void_air" { continue; }
+                        let lx = (index & 15) as i32;
+                        let lz = ((index >> 4) & 15) as i32;
+                        let ly = (index >> 8) as i32;
+                        block_snapshot.push((x * 16 + lx, section_y + ly, z * 16 + lz, name.clone()));
+                    }
+                }
+            }
+            if !block_snapshot.is_empty() {
+                vkyakee_mods::on_block_snapshot(x, z, self.dim.id(), &block_snapshot);
+            }
 
             // Subterranean & Surface Structure Scanners (SeedCrackerX parity)
             let is_nether = self.dim.id().contains("nether");
@@ -335,9 +373,13 @@ impl Game<'_> {
                                 break;
                             }
                         }
-                        if found_trial { break; }
+                        if found_trial {
+                            break;
+                        }
                     }
-                    if found_trial { break; }
+                    if found_trial {
+                        break;
+                    }
                 }
 
                 // 3. Ancient City: Deepslate levels y in [-50, -15]
@@ -347,15 +389,21 @@ impl Game<'_> {
                         for bx in [4, 11] {
                             let st = self.world.block(x * 16 + bx, y, z * 16 + bz);
                             let name = self.res.facts().get(st).name.as_ref();
-                            if name == "minecraft:reinforced_deepslate" || name == "minecraft:sculk_shrieker" {
+                            if name == "minecraft:reinforced_deepslate"
+                                || name == "minecraft:sculk_shrieker"
+                            {
                                 vkyakee_mods::on_structure_found("minecraft:ancient_city", x, z);
                                 found_ancient = true;
                                 break;
                             }
                         }
-                        if found_ancient { break; }
+                        if found_ancient {
+                            break;
+                        }
                     }
-                    if found_ancient { break; }
+                    if found_ancient {
+                        break;
+                    }
                 }
 
                 // 4. Desert Pyramid: Check y in [55, 75]

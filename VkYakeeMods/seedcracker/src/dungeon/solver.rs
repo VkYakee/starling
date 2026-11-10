@@ -1,7 +1,7 @@
 use rayon::prelude::*;
 
 use crate::dungeon::floor::{DungeonFloor, DungeonFloorBlock};
-use crate::math::chunk_rand::ChunkRand;
+use crate::math::chunk_rand;
 use crate::math::lcg::{JavaRandom, MASK48, MULTIPLIER};
 
 pub const DUNGEON_SALT_MODERN: u64 = 30002;
@@ -35,36 +35,22 @@ impl DungeonSolver {
         true
     }
 
-    /// Recovers decorator seed candidates by searching the initial call constraints.
-    /// Uses cobblestone matches as strong bit filters.
-    pub fn crack_decorator_seed(
-        floor: &DungeonFloor,
-        search_range_bits: u32,
+    /// Bounded candidate scan. search_range_bits is the candidate count exponent,
+    /// not a partition count across all 2^48 states.
+    pub fn crack_decorator_seed(floor: &DungeonFloor, search_range_bits: u32) -> Vec<u64> {
+        Self::crack_decorator_seed_range(floor, 0, 1_u64 << search_range_bits.min(24), &std::sync::atomic::AtomicBool::new(false))
+    }
+
+    /// Resumable/cancellable scan of an explicit decorator-seed interval.
+    pub fn crack_decorator_seed_range(
+        floor: &DungeonFloor, start: u64, end: u64,
+        cancel: &std::sync::atomic::AtomicBool,
     ) -> Vec<u64> {
-        let pattern = &floor.calls;
-        if pattern.is_empty() {
-            return Vec::new();
-        }
-
-        // We search the possible 48-bit states in parallel blocks
-        let chunk_count = 1u64 << (search_range_bits.min(24));
-        let step = (1u64 << 48) / chunk_count;
-
-        (0..chunk_count)
-            .into_par_iter()
-            .flat_map(|i| {
-                let mut results = Vec::new();
-                let start = i * step;
-                let end = start + step;
-
-                for seed in (start..end).step_by(1) {
-                    if Self::test_floor_sequence(seed, pattern) {
-                        results.push(seed);
-                    }
-                }
-                results
-            })
-            .collect()
+        if floor.calls.is_empty() || start >= end { return Vec::new(); }
+        (start..end.min(1_u64 << 48)).into_par_iter().filter(|seed| {
+            !cancel.load(std::sync::atomic::Ordering::Relaxed)
+                && Self::test_floor_sequence(*seed, &floor.calls)
+        }).collect()
     }
 
     /// Reverses a confirmed decorator seed back to candidate structure seeds.
@@ -77,7 +63,7 @@ impl DungeonSolver {
         let mut results = Vec::new();
         // Decorator seed is initialized from: (pop_seed + salt) ^ MULTIPLIER
         let base_pop_seed = ((decorator_seed ^ MULTIPLIER).wrapping_sub(salt)) & MASK48;
-        let structure_seed = ChunkRand::reverse_population_seed(base_pop_seed, chunk_x, chunk_z);
+        let structure_seed = chunk_rand::reverse_population_seed(base_pop_seed, chunk_x, chunk_z);
         results.push(structure_seed);
 
         // Also check if dungeon was generated after failed attempts (each failed attempt uses 5 calls)
@@ -86,7 +72,7 @@ impl DungeonSolver {
         for _ in 0..8 {
             prev_seed = (prev_seed.wrapping_mul(mult_m5).wrapping_add(add_m5)) & MASK48;
             let pop_seed = ((prev_seed ^ MULTIPLIER).wrapping_sub(salt)) & MASK48;
-            results.push(ChunkRand::reverse_population_seed(pop_seed, chunk_x, chunk_z));
+            results.push(chunk_rand::reverse_population_seed(pop_seed, chunk_x, chunk_z));
         }
 
         results

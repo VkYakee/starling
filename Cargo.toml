@@ -50,7 +50,7 @@ members = [
     "mods/official/recipes",
     "VkYakeeMods",
     "VkYakeeMods/seedcracker",
-    "VkYakeeMods/HorizonMatica",
+    "VkYakeeMods/VlaKeeMatica",
     "VkYakeeMods/VlakeeUI",
     "VkYakeeMods/VkMap",
 ]

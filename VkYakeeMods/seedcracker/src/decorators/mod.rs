@@ -1,4 +1,4 @@
-use crate::math::chunk_rand::ChunkRand;
+use crate::math::chunk_rand;
 use crate::math::lcg::{JavaRandom, MASK48, MULTIPLIER};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,7 +40,7 @@ impl EmeraldOreData {
 
     /// Verifies if a given structure seed generated the emerald ore at the exact position.
     pub fn test_seed(&self, structure_seed: u64) -> bool {
-        let pop_seed = ChunkRand::get_population_seed(structure_seed, self.chunk_x, self.chunk_z);
+        let pop_seed = chunk_rand::get_population_seed(structure_seed, self.chunk_x, self.chunk_z);
         let dec_seed = ((pop_seed.wrapping_add(self.salt())) ^ MULTIPLIER) & MASK48;
         let mut rand = JavaRandom::with_raw_seed(dec_seed);
 
@@ -82,7 +82,7 @@ impl DesertWellData {
     }
 
     pub fn test_seed(&self, structure_seed: u64) -> bool {
-        let pop_seed = ChunkRand::get_population_seed(structure_seed, self.chunk_x, self.chunk_z);
+        let pop_seed = chunk_rand::get_population_seed(structure_seed, self.chunk_x, self.chunk_z);
         let dec_seed = ((pop_seed.wrapping_add(self.salt)) ^ MULTIPLIER) & MASK48;
         let mut rand = JavaRandom::with_raw_seed(dec_seed);
 
@@ -109,7 +109,7 @@ mod tests {
         let chunk_z = -15;
 
         // Generate a known emerald placement
-        let pop_seed = ChunkRand::get_population_seed(structure_seed, chunk_x, chunk_z);
+        let pop_seed = chunk_rand::get_population_seed(structure_seed, chunk_x, chunk_z);
         let dec_seed = ((pop_seed.wrapping_add(60014)) ^ MULTIPLIER) & MASK48;
         let mut rand = JavaRandom::with_raw_seed(dec_seed);
 
