@@ -13,7 +13,7 @@ use crate::bedrock::{BedrockBlock, BedrockSolver};
 use crate::biomes::{BiomeLifter, BiomeSample, MC_1_20};
 use crate::decorators::{DesertWellData, EmeraldOreData};
 use crate::dungeon::{DungeonFloor, DungeonSolver, DUNGEON_SALT_MODERN};
-use crate::math::hashed_seed::HashedSeed;
+use crate::math::hashed_seed::{obfuscate_seed, find_world_seeds_from_hash};
 use crate::pillars::{EndPillars, PILLAR_COUNT};
 use crate::structures::lifting::StructureLifter;
 use crate::structures::StructureInstance;
@@ -176,7 +176,7 @@ impl TimeMachine {
         for seed in &structures {
             if cancelled() { out.cancelled = true; return out; }
             if let Some(hash) = input.hashed_seed {
-                worlds.extend(HashedSeed::find_world_seeds_from_hash(seed.get(), hash)
+                worlds.extend(find_world_seeds_from_hash(seed.get(), hash)
                     .into_iter().map(WorldSeed64::new));
             }
             if !input.biome_samples.is_empty() {

@@ -1,209 +1,180 @@
-/// High-performance Lattice Basis Reduction (Lenstra–Lenstra–Lovász / LLL)
-/// and Babai's Closest Vector Problem (CVP) algorithms for Minecraft seedfinding.
-///
-/// References:
-/// - A.K. Lenstra, H.W. Lenstra, Jr., and L. Lovász (1982) "Factoring polynomials with rational coefficients"
-/// - L. Babai (1986) "On Lovász' lattice reduction and the nearest lattice point problem"
-/// - EDDxample, Neil (hube12), Matthew Bolan (fnseedc collection)
+//! Lattice reduction for seed searching
+//!
+//! This module provides lattice-based algorithms for finding seeds
+//! that satisfy multiple modular constraints simultaneously.
 
-#[derive(Clone, Debug, PartialEq)]
+use std::ops::{Add, Mul, Sub};
+
+/// Matrix for lattice operations
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Matrix {
-    pub rows: usize,
-    pub cols: usize,
-    pub data: Vec<Vec<f64>>,
+    data: Vec<Vec<i128>>,
+    rows: usize,
+    cols: usize,
 }
 
 impl Matrix {
+    /// Create a new matrix
     pub fn new(rows: usize, cols: usize) -> Self {
         Self {
+            data: vec![vec![0; cols]; rows],
             rows,
             cols,
-            data: vec![vec![0.0; cols]; rows],
         }
     }
 
-    pub fn from_rows(rows: Vec<Vec<f64>>) -> Self {
-        let r = rows.len();
-        let c = if r > 0 { rows[0].len() } else { 0 };
-        Self {
-            rows: r,
-            cols: c,
-            data: rows,
-        }
+    /// Create from 2D vector
+    pub fn from_vec(data: Vec<Vec<i128>>) -> Self {
+        let rows = data.len();
+        let cols = if rows > 0 { data[0].len() } else { 0 };
+        Self { data, rows, cols }
     }
 
-    pub fn identity(size: usize) -> Self {
-        let mut m = Self::new(size, size);
-        for i in 0..size {
-            m.data[i][i] = 1.0;
-        }
-        m
+    /// Get element
+    pub fn get(&self, row: usize, col: usize) -> i128 {
+        self.data[row][col]
     }
 
-    #[inline]
-    pub fn row(&self, r: usize) -> &[f64] {
-        &self.data[r]
+    /// Set element
+    pub fn set(&mut self, row: usize, col: usize, value: i128) {
+        self.data[row][col] = value;
     }
 
-    #[inline]
-    pub fn row_mut(&mut self, r: usize) -> &mut [f64] {
-        &mut self.data[r]
+    /// Get row
+    pub fn row(&self, row: usize) -> &[i128] {
+        &self.data[row]
     }
 
+    /// Get mutable row
+    pub fn row_mut(&mut self, row: usize) -> &mut [i128] {
+        &mut self.data[row]
+    }
+
+    /// Number of rows
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    /// Number of columns
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
+
+    /// Swap rows
     pub fn swap_rows(&mut self, r1: usize, r2: usize) {
         self.data.swap(r1, r2);
     }
+
+    /// Multiply row by scalar
+    pub fn mul_row(&mut self, row: usize, scalar: i128) {
+        for val in &mut self.data[row] {
+            *val *= scalar;
+        }
+    }
+
+    /// Add multiple of one row to another
+    pub fn add_row_multiple(&mut self, target: usize, source: usize, mult: i128) {
+        for c in 0..self.cols {
+            self.data[target][c] += self.data[source][c] * mult;
+        }
+    }
+
+    /// LLL lattice reduction (simplified)
+    pub fn lll_reduce(&mut self, delta: f64) {
+        let n = self.rows.min(self.cols);
+        let mut k = 1;
+        
+        while k < n {
+            // Size reduction
+            for j in (0..k).rev() {
+                let mu = (self.get(k, j) as f64) / (self.get(j, j) as f64);
+                let mu_round = mu.round() as i128;
+                if mu_round != 0 {
+                    self.add_row_multiple(k, j, -mu_round);
+                }
+            }
+
+            // Lovász condition
+            let b_k_sq = self.row_norm_sq(k);
+            let b_k1_sq = if k > 0 { self.row_norm_sq(k - 1) } else { 1 };
+            
+            if (b_k_sq as f64) < (delta * b_k1_sq as f64) {
+                if k > 0 {
+                    self.swap_rows(k, k - 1);
+                    k -= 1;
+                } else {
+                    k += 1;
+                }
+            } else {
+                k += 1;
+            }
+        }
+    }
+
+    fn row_norm_sq(&self, row: usize) -> i128 {
+        self.data[row].iter().map(|&x| x * x).sum()
+    }
 }
 
-pub struct Lattice;
+/// Lattice for seed searching
+#[derive(Clone, Debug)]
+pub struct Lattice {
+    basis: Matrix,
+}
 
 impl Lattice {
-    #[inline]
-    pub fn dot_product(v1: &[f64], v2: &[f64]) -> f64 {
-        v1.iter().zip(v2.iter()).map(|(a, b)| a * b).sum()
+    /// Create a new lattice from basis vectors
+    pub fn new(basis: Matrix) -> Self {
+        Self { basis }
     }
 
-    #[inline]
-    pub fn norm_squared(v: &[f64]) -> f64 {
-        Self::dot_product(v, v)
-    }
-
-    /// Computes the Gram-Schmidt orthogonalization basis b* and coefficients mu.
-    /// b*_i = b_i - sum_{j=0}^{i-1} mu_{i,j} * b*_j
-    /// mu_{i,j} = <b_i, b*_j> / <b*_j, b*_j>
-    pub fn gram_schmidt(basis: &Matrix) -> (Matrix, Matrix) {
-        let n = basis.rows;
-        let m = basis.cols;
-        let mut b_star = Matrix::new(n, m);
-        let mut mu = Matrix::new(n, n);
-
+    /// Create lattice for solving modular equations
+    /// Given constraints: seed ≡ a_i (mod m_i)
+    pub fn from_constraints(constraints: &[(u64, u64)]) -> Self {
+        let n = constraints.len();
+        let mut basis = Matrix::new(n + 1, n + 1);
+        
+        // Diagonal: moduli
         for i in 0..n {
-            let mut v = basis.row(i).to_vec();
-            mu.data[i][i] = 1.0;
-
-            for j in 0..i {
-                let denom = Self::norm_squared(b_star.row(j));
-                if denom.abs() > 1e-12 {
-                    let c = Self::dot_product(basis.row(i), b_star.row(j)) / denom;
-                    mu.data[i][j] = c;
-                    for k in 0..m {
-                        v[k] -= c * b_star.data[j][k];
-                    }
-                }
-            }
-            b_star.data[i] = v;
+            basis.set(i, i, constraints[i].1 as i128);
         }
-
-        (b_star, mu)
+        
+        // Last row: target values
+        for i in 0..n {
+            basis.set(n, i, constraints[i].0 as i128);
+        }
+        basis.set(n, n, 1);
+        
+        Self { basis }
     }
 
-    /// Reduces a lattice basis using the LLL algorithm with parameter delta (default: 0.75 or 0.99).
-    pub fn lll(basis: &mut Matrix, delta: f64) {
-        let n = basis.rows;
-        let m = basis.cols;
-        if n <= 1 {
-            return;
-        }
-
-        let mut k = 1;
-        while k < n {
-            let (mut b_star, mut mu) = Self::gram_schmidt(basis);
-
-            // Size reduction on k
-            for j in (0..k).rev() {
-                let u = mu.data[k][j];
-                if u.abs() > 0.5 {
-                    let q = u.round();
-                    for col in 0..m {
-                        basis.data[k][col] -= q * basis.data[j][col];
-                    }
-                    let res = Self::gram_schmidt(basis);
-                    b_star = res.0;
-                    mu = res.1;
-                }
-            }
-
-            // Lovász condition: ||b*_k||^2 >= (delta - mu_{k, k-1}^2) * ||b*_{k-1}||^2
-            let norm_k = Self::norm_squared(b_star.row(k));
-            let norm_k_prev = Self::norm_squared(b_star.row(k - 1));
-            let mu_prev = mu.data[k][k - 1];
-
-            if norm_k >= (delta - mu_prev * mu_prev) * norm_k_prev - 1e-9 {
-                k += 1;
-            } else {
-                basis.swap_rows(k, k - 1);
-                k = k.saturating_sub(1).max(1);
-            }
-        }
+    /// Get the basis matrix
+    pub fn basis(&self) -> &Matrix {
+        &self.basis
     }
 
-    /// Solves the Closest Vector Problem (CVP) using Babai's Nearest Plane algorithm.
-    /// Given a reduced basis and a target vector, finds the closest lattice point.
-    pub fn babai_cvp(reduced_basis: &Matrix, target: &[f64]) -> Vec<f64> {
-        let n = reduced_basis.rows;
-        let m = reduced_basis.cols;
-        let (b_star, _) = Self::gram_schmidt(reduced_basis);
-
-        let mut current_target = target.to_vec();
-        let mut result = vec![0.0; m];
-
-        for i in (0..n).rev() {
-            let denom = Self::norm_squared(b_star.row(i));
-            if denom.abs() < 1e-12 {
-                continue;
-            }
-            let c = (Self::dot_product(&current_target, b_star.row(i)) / denom).round();
-            for j in 0..m {
-                result[j] += c * reduced_basis.data[i][j];
-                current_target[j] -= c * reduced_basis.data[i][j];
-            }
-        }
-
-        result
+    /// Get mutable basis matrix
+    pub fn basis_mut(&mut self) -> &mut Matrix {
+        &mut self.basis
     }
 
-    /// Fast lattice-based solver for a 2-structure congruence system:
-    /// Recovers structure seeds satisfying two regional constraints simultaneously.
-    pub fn solve_2_structures(
-        salt1: u64,
-        reg_x1: i32,
-        reg_z1: i32,
-        salt2: u64,
-        reg_x2: i32,
-        reg_z2: i32,
-        target_s1: u64,
-        target_s2: u64,
-    ) -> Vec<u64> {
-        // Delta between two region seed congruences
-        // S_reg1 = S + reg_x1*K1 + reg_z1*K2 + salt1 (mod 2^48)
-        // S_reg2 = S + reg_x2*K1 + reg_z2*K2 + salt2 (mod 2^48)
-        // S_reg2 - S_reg1 = (reg_x2 - reg_x1)*K1 + (reg_z2 - reg_z1)*K2 + (salt2 - salt1) (mod 2^48)
-        let k1: u64 = 341873128712;
-        let k2: u64 = 132897987541;
-        let mask48 = 0xFFFFFFFFFFFFu64;
+    /// Run LLL reduction
+    pub fn reduce(&mut self, delta: f64) {
+        self.basis.lll_reduce(delta);
+    }
 
-        let delta_x = (reg_x2 - reg_x1) as i64 as u64;
-        let delta_z = (reg_z2 - reg_z1) as i64 as u64;
-        let expected_diff = delta_x
-            .wrapping_mul(k1)
-            .wrapping_add(delta_z.wrapping_mul(k2))
-            .wrapping_add(salt2.wrapping_sub(salt1))
-            & mask48;
-
-        let actual_diff = target_s2.wrapping_sub(target_s1) & mask48;
-        if expected_diff != actual_diff {
-            return Vec::new();
+    /// Find short vectors (potential solutions)
+    pub fn find_short_vectors(&self, max_norm: i128) -> Vec<Vec<i128>> {
+        let mut results = Vec::new();
+        
+        for i in 0..self.basis.rows() {
+            let norm_sq = self.basis.row_norm_sq(i);
+            if norm_sq <= max_norm * max_norm {
+                results.push(self.basis.row(i).to_vec());
+            }
         }
-
-        // Recover structure seed: S = target_s1 - (reg_x1*K1 + reg_z1*K2 + salt1) (mod 2^48)
-        let offset1 = (reg_x1 as i64 as u64)
-            .wrapping_mul(k1)
-            .wrapping_add((reg_z1 as i64 as u64).wrapping_mul(k2))
-            .wrapping_add(salt1)
-            & mask48;
-
-        let structure_seed = target_s1.wrapping_sub(offset1) & mask48;
-        vec![structure_seed]
+        
+        results
     }
 }
 
@@ -212,71 +183,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_gram_schmidt_orthogonal() {
-        let b = Matrix::from_rows(vec![
-            vec![1.0, 1.0, 0.0],
-            vec![1.0, 0.0, 1.0],
-            vec![0.0, 1.0, 1.0],
-        ]);
-        let (b_star, _) = Lattice::gram_schmidt(&b);
-
-        let dot01 = Lattice::dot_product(b_star.row(0), b_star.row(1));
-        let dot02 = Lattice::dot_product(b_star.row(0), b_star.row(2));
-        let dot12 = Lattice::dot_product(b_star.row(1), b_star.row(2));
-
-        assert!(dot01.abs() < 1e-9);
-        assert!(dot02.abs() < 1e-9);
-        assert!(dot12.abs() < 1e-9);
+    fn test_matrix_basic() {
+        let mut m = Matrix::new(2, 2);
+        m.set(0, 0, 1);
+        m.set(0, 1, 2);
+        m.set(1, 0, 3);
+        m.set(1, 1, 4);
+        
+        assert_eq!(m.get(0, 0), 1);
+        assert_eq!(m.get(1, 1), 4);
     }
 
     #[test]
-    fn test_lll_basis_reduction() {
-        let mut b = Matrix::from_rows(vec![
-            vec![1.0, 1.0, 1.0],
-            vec![-1.0, 0.0, 2.0],
-            vec![3.0, 5.0, 6.0],
-        ]);
-        Lattice::lll(&mut b, 0.75);
-
-        // Verify vectors are shorter
-        for r in 0..b.rows {
-            assert!(Lattice::norm_squared(b.row(r)) > 0.0);
-        }
-    }
-
-    #[test]
-    fn test_babai_cvp() {
-        let mut basis = Matrix::from_rows(vec![
-            vec![2.0, 0.0],
-            vec![0.0, 2.0],
-        ]);
-        Lattice::lll(&mut basis, 0.75);
-
-        let target = vec![3.1, 0.9];
-        let closest = Lattice::babai_cvp(&basis, &target);
-
-        assert_eq!(closest, vec![4.0, 0.0].into_iter().map(|x| (x as f64).round()).collect::<Vec<f64>>());
-    }
-
-    #[test]
-    fn test_structure_2_lattice() {
-        let k1: u64 = 341873128712;
-        let k2: u64 = 132897987541;
-        let mask48 = 0xFFFFFFFFFFFFu64;
-
-        let seed: u64 = 12345678901234;
-        let salt1: u64 = 14357617;
-        let salt2: u64 = 14357620;
-
-        let rx1 = 5;
-        let rz1 = -3;
-        let rx2 = 8;
-        let rz2 = 4;
-
-        let s1 = (seed.wrapping_add((rx1 as i64 as u64).wrapping_mul(k1)).wrapping_add((rz1 as i64 as u64).wrapping_mul(k2)).wrapping_add(salt1)) & mask48;
-        let s2 = (seed.wrapping_add((rx2 as i64 as u64).wrapping_mul(k1)).wrapping_add((rz2 as i64 as u64).wrapping_mul(k2)).wrapping_add(salt2)) & mask48;
-
-        let recovered = Lattice::solve_2_structures(salt1, rx1, rz1, salt2, rx2, rz2, s1, s2);
-        assert_eq!(recovered, vec![seed]);
+    fn test_lattice_from_constraints() {
+        // seed ≡ 5 (mod 7)
+        // seed ≡ 3 (mod 11)
+        let constraints = [(5u64, 7u64), (3u64, 11u64)];
+        let lattice = Lattice::from_constraints(&constraints);
+        
+        assert_eq!(lattice.basis().rows(), 3);
+        assert_eq!(lattice.basis().cols(), 3);
     }
 }

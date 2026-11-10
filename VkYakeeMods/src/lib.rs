@@ -6,6 +6,7 @@ pub mod storage;
 pub mod verifier;
 pub mod vkmap_adapter;
 pub mod vlakee_ui_adapter;
+pub mod vlakeematica_adapter;
 
 pub use api::{ModMetadata, VkMod};
 pub use mod_menu::{FloatingButtonTheme, MenuAction, MenuPage, MenuTheme, ModMenuState, ModuleStatus};
@@ -18,7 +19,8 @@ pub fn seedcracker_hud_action(command: &str) {
 pub use storage::StorageManager;
 pub use verifier::SeedVerifier;
 pub use vkmap_adapter::VkMapMod;
-pub use vlakee_ui_adapter::VlakeeUIMod;
+pub use vlakee_ui_adapter::{VlaKeeUiMod, draw_vlakee_ui, toggle_vlakee_menu, is_vlakee_menu_open};
+pub use vlakeematica_adapter::VlaKeeMaticaMod;
 
 use std::sync::{Mutex, OnceLock};
 use std::collections::VecDeque;
@@ -48,18 +50,8 @@ fn dispatch_seed_publications() {
     for candidates in pending { broadcast_seed_candidates(&candidates); }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum HudTab {
-    All,
-    HorizonMatica,
-    SeedCracker,
-    VlakeeUI,
-    VkMap,
-}
-
 pub struct VkModHub {
     mods: Vec<Box<dyn VkMod>>,
-    pub active_tab: HudTab,
     pub suppress_default_f3: bool,
     pub master_f3_active: bool,
 }
@@ -68,7 +60,6 @@ impl VkModHub {
     pub fn new() -> Self {
         Self {
             mods: Vec::new(),
-            active_tab: HudTab::All,
             suppress_default_f3: false,
             master_f3_active: true,
         }
@@ -100,11 +91,11 @@ static MOD_HUB: OnceLock<Mutex<VkModHub>> = OnceLock::new();
 pub fn hub() -> &'static Mutex<VkModHub> {
     MOD_HUB.get_or_init(|| {
         let mut h = VkModHub::new();
-        // Register default VkYakee mods: SeedCracker, HorizonMatica, VlakeeUI & VkMap
+        // Register default VkYakee mods: SeedCracker, VlaKeeMatica, VkMap & VlaKeeUI
         h.register(Box::new(SeedCrackerMod::new()));
-        h.register(Box::new(HorizonMaticaMod::new()));
-        h.register(Box::new(VlakeeUIMod::new()));
+        h.register(Box::new(VlaKeeMaticaMod::new()));
         h.register(Box::new(VkMapMod::new()));
+        h.register(Box::new(VlaKeeUiMod::new()));
         Mutex::new(h)
     })
 }
@@ -184,20 +175,6 @@ pub fn on_command(command: &str, ran: &mut bool) {
             *ran = true;
             return;
         }
-
-        if let Ok(mut h) = hub().lock() {
-            if parts.len() >= 3 && parts[1].eq_ignore_ascii_case("tab") {
-                match parts[2].to_ascii_lowercase().as_str() {
-                    "hm" | "horizonmatica" | "schem" => h.active_tab = HudTab::HorizonMatica,
-                    "sc" | "seedcracker" | "seed" => h.active_tab = HudTab::SeedCracker,
-                    "vui" | "vlakee" | "vlakeeui" | "ui" => h.active_tab = HudTab::VlakeeUI,
-                    "map" | "vkmap" => h.active_tab = HudTab::VkMap,
-                    _ => h.active_tab = HudTab::All,
-                }
-                *ran = true;
-                return;
-            }
-        }
     }
 
     if let Ok(mut h) = hub().lock() {
@@ -253,17 +230,7 @@ pub fn get_hud_lines() -> Vec<String> {
     let mut lines = Vec::new();
     if let Ok(h) = hub().lock() {
         for m in &h.mods {
-            let id = m.metadata().id;
-            let show = match h.active_tab {
-                HudTab::All => true,
-                HudTab::HorizonMatica => id == "horizonmatica",
-                HudTab::SeedCracker => id == "seedcracker",
-                HudTab::VlakeeUI => id == "vlakee_ui",
-                HudTab::VkMap => id == "vkmap",
-            };
-            if show {
-                lines.extend(m.hud_lines());
-            }
+            lines.extend(m.hud_lines());
         }
     }
     lines

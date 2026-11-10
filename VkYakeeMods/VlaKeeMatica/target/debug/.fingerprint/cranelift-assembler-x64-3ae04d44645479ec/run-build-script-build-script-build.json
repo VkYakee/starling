@@ -1,0 +1,1 @@
+{"rustc":10654264723025995475,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[164812882876009303,"build_script_build",false,8032495953416766026]],"local":[{"RerunIfChanged":{"output":"debug/build/cranelift-assembler-x64-3ae04d44645479ec/output","paths":["build.rs"]}}],"rustflags":[],"config":0,"compile_kind":0}

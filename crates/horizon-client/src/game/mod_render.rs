@@ -90,6 +90,7 @@ impl Game<'_> {
         for shape in self.mods.mods.hud_shapes() {
             self.draw_shapes(batch, std::slice::from_ref(shape), (0.0, 0.0));
         }
+        vkyakee_mods::draw_vlakee_ui(batch, &self.gui.atlas);
     }
     /// VkYakeeMods floating launcher and translucent green/red menu.
     /// Kept in Starling's HUD batch so it follows GUI scaling and render order.

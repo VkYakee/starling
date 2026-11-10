@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "vlakeematica",
+  "version": "1.0.0",
+  "game": "26.3",
+  "horizon": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "mixins": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "hooks": 1
+}

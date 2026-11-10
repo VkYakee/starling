@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=build.rs
+cargo:rustc-env=DEBUG_OUTPUT_DIR=/data/data/com.termux/files/home/Mods/starling/VkYakeeMods/VlaKeeMatica/target/debug/build/wasmtime-internal-component-macro-966a37f6fc2c561d/out

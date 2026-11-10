@@ -1,0 +1,63 @@
+[package]
+name = "vlakeematica"
+version = "1.0.0"
+edition = "2021"
+authors = ["VkYakee", "Masa (Litematica original)"]
+description = "VlaKeeMatica: Litematica 1:1 Native Rust Rewrite for Starling / Horizon Android"
+license = "MIT"
+repository = "https://github.com/vasysik/starling"
+
+[lib]
+name = "vlakeematica"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["mods"]
+mods = ["horizon-mods/runtime"]
+native = []
+
+[dependencies]
+# Horizon crates - available at compile time via the launcher
+horizon-world = { path = "../../crates/horizon-world", optional = true }
+# horizon-client = { path = "../../crates/horizon-client", optional = true }  // cyclic dep
+# horizon-client-render = { path = "../../crates/horizon-client-render", optional = true }  // cyclic dep
+
+# VkYakeeMods API - local file
+vkyakee-mods-api = { path = "../api", optional = true }
+
+# Horizon Mod SDK for native integration
+horizon-mods = { path = "../../crates/horizon-mods", optional = true }
+
+# Standard utilities
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+fastnbt = "2.6"
+flate2 = "1.0"
+byteorder = "1.5"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+thiserror = "1.0"
+parking_lot = "0.12"
+crossbeam = "0.8"
+smallvec = "1.0"
+indexmap = "2.0"
+once_cell = "1.19"
+bitflags = "2.0"
+bytemuck = "1.15"
+lazy_static = "1.4"
+dirs = "5.0"
+
+# For Android builds
+[target.'cfg(target_os = "android")'.dependencies]
+android_logger = "0.15"
+jni = "0.21"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+opt-level = "z"
+
+[profile.dev]
+debug = true
+overflow-checks = true

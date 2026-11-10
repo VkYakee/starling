@@ -1,7 +1,7 @@
 use rayon::prelude::*;
 
 use crate::dungeon::floor::{DungeonFloor, DungeonFloorBlock};
-use crate::math::chunk_rand::ChunkRand;
+use crate::math::chunk_rand;
 use crate::math::lcg::{JavaRandom, MASK48, MULTIPLIER};
 
 pub const DUNGEON_SALT_MODERN: u64 = 30002;
@@ -63,7 +63,7 @@ impl DungeonSolver {
         let mut results = Vec::new();
         // Decorator seed is initialized from: (pop_seed + salt) ^ MULTIPLIER
         let base_pop_seed = ((decorator_seed ^ MULTIPLIER).wrapping_sub(salt)) & MASK48;
-        let structure_seed = ChunkRand::reverse_population_seed(base_pop_seed, chunk_x, chunk_z);
+        let structure_seed = chunk_rand::reverse_population_seed(base_pop_seed, chunk_x, chunk_z);
         results.push(structure_seed);
 
         // Also check if dungeon was generated after failed attempts (each failed attempt uses 5 calls)
@@ -72,7 +72,7 @@ impl DungeonSolver {
         for _ in 0..8 {
             prev_seed = (prev_seed.wrapping_mul(mult_m5).wrapping_add(add_m5)) & MASK48;
             let pop_seed = ((prev_seed ^ MULTIPLIER).wrapping_sub(salt)) & MASK48;
-            results.push(ChunkRand::reverse_population_seed(pop_seed, chunk_x, chunk_z));
+            results.push(chunk_rand::reverse_population_seed(pop_seed, chunk_x, chunk_z));
         }
 
         results
