@@ -7,16 +7,19 @@ authors = ["VkYakee"]
 description = "VkYakee Mod Framework and Hub for Starling Minecraft"
 
 [features]
-default = ["api", "vlakeematica_mod"]
+# The Starling integration expects every bundled mod to be present.
+default = ["api", "seedcracker", "vlakeematica_mod", "vkmap", "vlakee_ui"]
 api = []
-vlakeematica_mod = ["dep:vlakeematica"]
-vkmap = ["dep:vkmap"]
 seedcracker = ["dep:seedcracker"]
+vlakeematica_mod = ["dep:horizonmatica"]
+vkmap = ["dep:vkmap"]
 vlakee_ui = ["dep:vlakee-ui"]
 
 [dependencies]
 seedcracker = { path = "seedcracker", optional = true }
-vlakeematica = { path = "VlaKeeMatica", optional = true }
+# VlaKeeMatica's package/library is named vlakeematica; alias it to the
+# historical horizonmatica crate name consumed by the adapter and storage.
+horizonmatica = { package = "vlakeematica", path = "VlaKeeMatica", optional = true }
 vlakee-ui = { path = "VlakeeUI", optional = true }
 vkmap = { path = "VkMap", optional = true }
 log = "0.4"
