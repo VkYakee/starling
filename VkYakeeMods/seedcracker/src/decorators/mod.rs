@@ -29,3 +29,5 @@ impl DesertWellData{
  }
 }
 #[cfg(test)]]
+    #[test] fn emerald_roundtrip(){let seed=765906787396911863u64;let cx=10;let cz=-15;let pop=chunk_rand::get_population_seed(seed,cx,cz);let mut r=JavaRandom::from_state(((pop.wrapping_add(60014)^MULTIPLIER)&MASK48));let _=r.next_int_bounded(6);let x=r.next_int_bounded(16).unwrap_or(0);let z=r.next_int_bounded(16).unwrap_or(0);let y=r.next_int_bounded(28).unwrap_or(0)+4;assert!(EmeraldOreData::new(cx,cz,(cx<<4)+x,y,(cz<<4)+z).test_seed(seed));}
+}
