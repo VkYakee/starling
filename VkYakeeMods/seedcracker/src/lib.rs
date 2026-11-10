@@ -36,7 +36,6 @@ pub use cracker::{
     CrackerResult, CrackerState,
     SeedCracker, SeedCrackerObserver, StructureCracker, StructureCrackerResult,
     StructureObserver, ObservedStructure,
-    PillarObservations,
 };
 pub use decorators::{DecoratorType, EmeraldOreData, DesertWellData};
 pub use dungeon::{DungeonFloor, DungeonSolver, DUNGEON_SALT_MODERN};
