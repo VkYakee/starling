@@ -63,7 +63,16 @@ def download_game(version, directory):
     # and client/server jar hashes are checked against the engine pins below.
     versions = directory / 'versions' / version
     manifest_path = versions / f'{version}.json'
+    # Always refresh a stale/foreign cached version JSON from Mojang's catalog.
+    # lab.download reuses only a file whose SHA-1 matches this official entry;
+    # the launcher may have left a republished 26.3 manifest in this directory.
     lab.download(entry['url'], manifest_path, entry['sha1'])
+    actual_manifest_sha1 = lab.digest(manifest_path)
+    if actual_manifest_sha1 != entry['sha1']:
+        raise ValueError(
+            f"Invalid cached Minecraft {version} manifest: expected Mojang SHA-1 "
+            f"{entry['sha1']}, got {actual_manifest_sha1}. Rerun preparation to refresh it."
+        )
     manifest = json.loads(manifest_path.read_text())
     files = []
     for side in ['client', 'server']:
