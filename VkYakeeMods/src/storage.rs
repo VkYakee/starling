@@ -604,4 +604,15 @@ impl StorageManager {
         )
         .map_err(|e| format!("Error exportando mapa JSON: {}", e))
     }
+
+    /// Writes a mod-generated export into the shared VkYakeeMods exports directory.
+    pub fn save_file(&self, file_name: &str, bytes: &[u8]) -> Result<PathBuf, String> {
+        let safe_name = Path::new(file_name).file_name()
+            .ok_or_else(|| "Nombre de archivo inválido".to_string())?;
+        let path = self.base_dir.join("exports").join(safe_name);
+        if let Some(parent) = path.parent() { fs::create_dir_all(parent).map_err(|e| e.to_string())?; }
+        fs::write(&path, bytes).map_err(|e| format!("No se pudo guardar {:?}: {}", path, e))?;
+        Ok(path)
+    }
+
 }
