@@ -12,13 +12,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use rayon::prelude::*;
 
-use crate::cracker::bedrock::BedrockCracker;
-use crate::cracker::biome::BiomeCracker;
-use crate::cracker::structure::StructureCracker;
-use crate::pillars::EndPillars;
+pub use crate::cracker::bedrock::{BedrockCracker, BedrockCrackerResult, BedrockObservation, BedrockObserver, BedrockColumn};
+pub use crate::cracker::biome::{BiomeCracker, BiomeCrackerResult, BiomeObserver, BiomeObservation, ObservedBiome};
+pub use crate::cracker::structure::{StructureCracker, StructureCrackerResult, StructureObserver, ObservedStructure};
+pub use crate::pillars::{EndPillars, PillarObservations, PILLAR_COUNT};
 use crate::math::chunk_rand;
 use crate::math::hashed_seed;
-use crate::pillars::PillarObservations;
+
 
 /// Complete cracker state containing all observations
 #[derive(Debug, Clone, Default)]
@@ -335,13 +335,6 @@ impl SeedCrackerObserver {
         &mut self.state
     }
 }
-
-// Re-exports for external use - only re-export what we need, avoid duplicates
-// The types are already imported at the top, so we just need to re-export the modules
-pub use crate::cracker::bedrock::{BedrockCracker, BedrockCrackerResult, BedrockObservation, BedrockObserver, BedrockColumn};
-pub use crate::cracker::biome::{BiomeCracker, BiomeCrackerResult, BiomeObserver, BiomeObservation, ObservedBiome};
-pub use crate::cracker::structure::{StructureCracker, StructureCrackerResult, StructureObserver, ObservedStructure};
-pub use crate::pillars::{EndPillars, PillarObservations, PILLAR_COUNT};
 
 #[cfg(test)]
 mod tests {
