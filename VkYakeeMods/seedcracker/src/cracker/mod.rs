@@ -13,7 +13,7 @@ use std::sync::Arc;
 use rayon::prelude::*;
 
 pub use crate::cracker::bedrock::{BedrockCracker, BedrockCrackerResult, BedrockObservation, BedrockObserver, BedrockColumn};
-pub use crate::cracker::biome::{BiomeCracker, BiomeCrackerResult, BiomeObserver, BiomeObservation, ObservedBiome};
+pub use crate::cracker::biome::{BiomeCracker, BiomeObserver, ObservedBiome};
 pub use crate::cracker::structure::{StructureCracker, StructureCrackerResult, StructureObserver, ObservedStructure};
 pub use crate::pillars::{EndPillars, PillarObservations, PILLAR_COUNT};
 use crate::math::chunk_rand;
