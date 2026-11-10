@@ -14,12 +14,12 @@ impl VlaKeeMaticaPage {
 
 /// Quick action buttons for VlaKeeMatica
 const VM_ACTIONS: &[(&str, &str, [u8; 4])] = &[
-    ("📐 Printer", "/hm printer", palette::GREEN),
-    ("👻 Ghost Blocks", "/hm ghost", palette::GREEN_DARK),
-    ("🤖 Auto-Build", "/hm autobuild", palette::ACCENT),
-    ("📋 Material List", "/hm materials", palette::BORDER),
-    ("🔧 Settings", "/hm settings", palette::GREEN),
-    ("📁 Load Schematic", "/hm load", palette::RED_DARK),
+    ("📐 Printer", "hm tool", palette::GREEN),
+    ("👻 Ghost Blocks", "hm hologram", palette::GREEN_DARK),
+    ("🤖 Auto-Build", "hm hologram", palette::ACCENT),
+    ("📋 Material List", "hm materials", palette::BORDER),
+    ("🔧 Settings", "hm easyplace", palette::GREEN),
+    ("📁 Load Schematic", "hm load", palette::RED_DARK),
 ];
 
 impl super::Page for VlaKeeMaticaPage {
