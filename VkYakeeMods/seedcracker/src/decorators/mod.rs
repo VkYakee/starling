@@ -42,7 +42,7 @@ impl EmeraldOreData {
     pub fn test_seed(&self, structure_seed: u64) -> bool {
         let pop_seed = chunk_rand::get_population_seed(structure_seed, self.chunk_x, self.chunk_z);
         let dec_seed = ((pop_seed.wrapping_add(self.salt())) ^ MULTIPLIER) & MASK48;
-        let mut rand = JavaRandom::with_raw_seed(dec_seed);
+        let mut rand = JavaRandom::from_state(dec_seed);
 
         let count = rand.next_int_bounded(6) + 3;
         let ox = self.block_x & 15;
