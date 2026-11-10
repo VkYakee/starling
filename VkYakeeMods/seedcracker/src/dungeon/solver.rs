@@ -63,7 +63,7 @@ impl DungeonSolver {
         let mut results = Vec::new();
         // Decorator seed is initialized from: (pop_seed + salt) ^ MULTIPLIER
         let base_pop_seed = ((decorator_seed ^ MULTIPLIER).wrapping_sub(salt)) & MASK48;
-        let structure_seed = chunk_rand::reverse_population_seed(base_pop_seed, chunk_x, chunk_z);
+        let structure_seed = crate::cracker::bedrock::reverse_population_seed(base_pop_seed, chunk_x, chunk_z);
         results.push(structure_seed);
 
         // Also check if dungeon was generated after failed attempts (each failed attempt uses 5 calls)
