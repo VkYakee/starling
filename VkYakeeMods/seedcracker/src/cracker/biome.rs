@@ -4,7 +4,7 @@
 
 use horizon_core::biome::{BiomeZoom, obfuscate_seed};
 use horizon_core::position::BlockPos;
-use horizon_world::worldgen::biome_source::runtime::{BiomeSourceResolver, ResolvedBiomeSource};
+use horizon_world::worldgen::biome_source::{BiomeSourceResolver, ResolvedBiomeSource};
 use horizon_core::density::{DensitySampler, SamplerContext};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
