@@ -14,14 +14,14 @@ impl VkMapPage {
 
 /// Quick action buttons for VkMap
 const VKMAP_ACTIONS: &[(&str, &str, [u8; 4])] = &[
-    ("🗺️ Minimap", "/vkmap minimap", palette::GREEN),
-    ("👁️ Radar", "/vkmap radar", palette::GREEN_DARK),
-    ("📍 Waypoints", "/vkmap waypoints", palette::ACCENT),
-    ("🕳️ Cave Mode", "/vkmap cave", palette::BORDER),
-    ("🏗️ Structures", "/vkmap structures", palette::GREEN),
-    ("🔄 Sync Seed", "/vkmap sync", palette::RED_DARK),
-    ("📐 Perspective", "/vkmap perspective", palette::GREEN),
-    ("💾 Save Data", "/vkmap save", palette::RED),
+    ("🗺️ Minimap", "vkmap minimap", palette::GREEN),
+    ("👁️ Radar", "vkmap radar", palette::GREEN_DARK),
+    ("📍 Waypoints", "vkmap waypoints", palette::ACCENT),
+    ("🕳️ Cave Mode", "vkmap cave", palette::BORDER),
+    ("🏗️ Structures", "vkmap structures", palette::GREEN),
+    ("🔄 Sync Seed", "vkmap sync", palette::RED_DARK),
+    ("📐 Perspective", "vkmap perspective", palette::GREEN),
+    ("💾 Save Data", "vkmap save", palette::RED),
 ];
 
 impl super::Page for VkMapPage {
